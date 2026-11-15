@@ -1,0 +1,487 @@
+<!-- ... existing code ... -->
+                        <p class="text-[11px] text-blue-100 mt-0.5 flex items-center gap-1">
+                            <span id="cloud-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="cloud-status-text">Live Sync</span> • <span id="header-role-badge" class="font-bold text-amber-200">Chủ Shop</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <!-- Nút Chuyển vai trò nhanh (Thu ngân <-> Chủ shop) -->
+                    <button onclick="openRoleSwitchModal()" id="btn-role-switch" class="px-2 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-[10px] font-extrabold flex items-center gap-1 border border-white/20 transition tap-scale" title="Đổi vai trò / Khóa quầy">
+                        <i class="fa-solid fa-shield-halved text-amber-300"></i>
+                        <span id="btn-role-label">Quầy</span>
+                    </button>
+                    <!-- Nút Đơn tạm lưu (Hold Orders) -->
+                    <button onclick="openHoldOrdersModal()" class="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 transition tap-scale" title="Đơn hàng đang tạm lưu">
+                        <i class="fa-solid fa-pause-circle text-sm"></i>
+                        <span id="hold-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow border border-blue-700">0</span>
+                    </button>
+                    <!-- Nút Cài đặt (Chỉ hiển thị cho Chủ Shop) -->
+                    <button onclick="openSettingsModal()" id="btn-header-settings" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 transition tap-scale" title="Cài đặt & Mã Cửa Hàng">
+                        <i class="fa-solid fa-gear text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+<!-- ... existing code ... -->
+        <!-- THANH ĐIỀU HƯỚNG DƯỚI CÙNG (BOTTOM NAVIGATION BAR - PHÂN QUYỀN THEO VAI TRÒ) -->
+        <nav class="bg-white border-t border-slate-200 px-0.5 py-1.5 flex justify-around items-center z-30 shrink-0 shadow-[0_-4px_15px_rgba(0,0,0,0.04)]">
+            <button onclick="switchTab('pos')" data-tab="pos" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-blue-600 transition">
+                <i class="fa-solid fa-cash-register text-base mb-0.5"></i>
+                <span class="text-[9px] font-bold">Bán hàng</span>
+            </button>
+            <button onclick="switchTab('crm')" data-tab="crm" class="nav-btn relative flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-crown text-base mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Hội viên</span>
+                <span id="nav-bday-dot" class="hidden absolute top-1 right-3 w-2 h-2 rounded-full bg-pink-500"></span>
+            </button>
+            <button onclick="switchTab('invoices')" data-tab="invoices" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-receipt text-base mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Hóa đơn</span>
+            </button>
+            <button onclick="switchTab('products')" data-tab="products" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-tags text-base mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Sản phẩm</span>
+            </button>
+            <button onclick="switchTab('inventory')" data-tab="inventory" id="nav-tab-inventory" class="nav-btn owner-only-nav relative flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-warehouse text-base mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Kho hàng</span>
+                <span id="nav-low-stock-dot" class="hidden absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-500"></span>
+            </button>
+            <button onclick="switchTab('reports')" data-tab="reports" id="nav-tab-reports" class="nav-btn owner-only-nav flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Báo cáo</span>
+            </button>
+        </nav>
+
+        <!-- MÀN HÌNH KHỞI ĐỘNG / CHỌN CHẾ ĐỘ & LIÊN KẾT MÃ CỬA HÀNG -->
+        <div id="modal-role-gate" class="hidden absolute inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white p-5 flex flex-col justify-between overflow-y-auto">
+            <div class="text-center pt-4 space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center mx-auto shadow-lg">
+                    <i class="fa-solid fa-store text-2xl text-amber-300"></i>
+                </div>
+                <h2 class="text-xl font-extrabold tracking-tight">SmartMart POS Cloud</h2>
+                <p class="text-xs text-blue-200">Đồng bộ thời gian thực giữa Máy Quầy & Điện thoại Chủ Shop</p>
+            </div>
+
+            <div class="space-y-4 my-auto py-4">
+                <!-- Bước 1: Mã Cửa Hàng để liên kết 2 máy -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-3xl p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-extrabold uppercase tracking-wider text-amber-300">1. Mã Cửa Hàng (Store ID)</label>
+                        <button type="button" onclick="generateNewStoreId()" class="text-[11px] font-bold text-blue-300 hover:text-white underline">Tạo mã mới</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="gate-store-id" placeholder="VD: SMARTMART-8899" class="flex-1 bg-slate-950/60 border border-white/20 rounded-xl px-3 py-2.5 text-sm font-mono font-extrabold uppercase text-emerald-300 tracking-wider focus:outline-none focus:border-emerald-400">
+                        <button type="button" onclick="copyStoreId()" class="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 rounded-xl text-xs font-bold tap-scale" title="Sao chép mã gửi sang máy khác">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-blue-200/80 leading-relaxed">
+                        <i class="fa-solid fa-circle-info mr-1 text-emerald-400"></i>Nhập cùng <strong>Mã Cửa Hàng</strong> trên máy bán hàng tại shop và điện thoại cá nhân của bạn để tự động đồng bộ dữ liệu.
+                    </p>
+                </div>
+
+                <!-- Bước 2: Chọn Chế độ thiết bị -->
+                <div class="space-y-2.5">
+                    <label class="text-xs font-extrabold uppercase tracking-wider text-amber-300 block px-1">2. Chọn Vai trò thiết bị này</label>
+
+                    <!-- Chế độ A: Máy Quầy Thu Ngân -->
+                    <button type="button" onclick="enterAppAsCashier()" class="w-full text-left bg-white text-slate-900 rounded-3xl p-4 shadow-xl hover:bg-blue-50 transition tap-scale border-2 border-transparent hover:border-blue-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg shrink-0">
+                                <i class="fa-solid fa-cash-register"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-extrabold text-sm text-slate-900">Máy Quầy Thu Ngân</h3>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Mở ngay</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Bán hàng, quét mã, tích điểm hội viên. Tự động ẩn báo cáo doanh thu, lãi gộp & giá vốn.</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Chế độ B: Chủ Cửa Hàng (Khóa PIN 4 số) -->
+                    <div class="bg-slate-900/90 border border-amber-400/40 rounded-3xl p-4 space-y-3 shadow-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-lg shrink-0">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-extrabold text-sm text-white">Chủ Cửa Hàng (Giám sát)</h3>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300">Bảo mật PIN</span>
+                                </div>
+                                <p class="text-[11px] text-slate-300 mt-0.5">Xem doanh thu real-time, lợi nhuận, tồn kho & quản lý từ xa.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 pt-1">
+                            <input type="password" inputmode="numeric" maxlength="4" id="gate-owner-pin" placeholder="PIN 4 số (Mặc định: 1234)" class="flex-1 bg-slate-950 border border-white/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-center tracking-[0.35em] text-white focus:outline-none focus:border-amber-400">
+                            <button type="button" onclick="enterAppAsOwner()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold tap-scale shrink-0">
+                                Mở khóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-[10px] text-slate-400 pb-2">Mọi giao dịch tại quầy được mã hóa & đồng bộ tức thì về máy chủ</p>
+        </div>
+<!-- ... existing code ... -->
+        <!-- 12. MODAL CÀI ĐẶT, MÃ CỬA HÀNG & ĐỔI MÃ PIN CHỦ SHOP -->
+        <div id="modal-settings" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-4 w-full max-w-[350px] max-h-[88%] overflow-y-auto space-y-3.5 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h3 class="font-bold text-base text-slate-800">Cài đặt & Phân quyền Chủ Shop</h3>
+                    <button onclick="closeModal('modal-settings')" class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+                </div>
+
+                <!-- Thông tin Mã Cửa Hàng đang kết nối -->
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-blue-900"><i class="fa-solid fa-cloud text-blue-600 mr-1"></i>Mã Cửa Hàng liên kết:</span>
+                        <button onclick="copyStoreId()" class="text-[11px] font-extrabold text-blue-700 underline">Sao chép</button>
+                    </div>
+                    <p id="settings-store-id-display" class="font-mono text-sm font-extrabold text-blue-800 bg-white px-2.5 py-1.5 rounded-xl border border-blue-100 text-center">SMARTMART-8899</p>
+                    <button onclick="openRoleSwitchModal()" class="w-full py-2 bg-blue-600 text-white rounded-xl font-bold text-[11px] tap-scale">
+                        Đổi Mã Cửa Hàng / Khóa sang Chế độ Quầy
+                    </button>
+                </div>
+
+                <!-- Đổi mã PIN Chủ Cửa Hàng -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs space-y-2">
+                    <label class="font-bold text-slate-800 block"><i class="fa-solid fa-key text-amber-500 mr-1"></i>Đổi mã PIN Chủ Cửa Hàng (4 số):</label>
+                    <div class="flex gap-2">
+                        <input type="password" inputmode="numeric" maxlength="4" id="setting-new-pin" placeholder="Nhập PIN mới (4 số)" class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-center tracking-widest">
+                        <button onclick="updateOwnerPin()" class="px-3.5 py-2 bg-slate-900 text-white rounded-xl font-bold tap-scale">Lưu PIN</button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                    <label class="font-bold text-slate-700 block">Nhân viên thu ngân trực ca:</label>
+                    <select id="setting-cashier" onchange="updateCashier(this.value)" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 font-semibold bg-white">
+                        <option value="Minh Anh">Minh Anh (Ca trưởng)</option>
+                        <option value="Hoàng Nam">Hoàng Nam (Thu ngân 02)</option>
+                        <option value="Thu Thảo">Thu Thảo (Thu ngân 03)</option>
+                    </select>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs space-y-2">
+                    <p class="font-bold text-amber-800"><i class="fa-solid fa-database mr-1"></i> Khôi phục dữ liệu mẫu</p>
+                    <button onclick="resetDemoData()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-sm tap-scale">
+                        <i class="fa-solid fa-rotate mr-1"></i> Khôi phục dữ liệu mẫu siêu thị
+                    </button>
+                </div>
+            </div>
+        </div>
+<!-- ... existing code ... -->
+    <!-- ==================== LOGIC XỬ LÝ TOÀN DIỆN SMARTMART POS ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Kết nối Firebase Firestore thời gian thực (tự động fallback nếu chưa cấu hình môi trường)
+        window.CloudSync = {
+            db: null,
+            user: null,
+            unsubscribe: null,
+            isApplyingRemote: false,
+            async init() {
+                try {
+                    if (typeof __firebase_config === 'undefined') return false;
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const fbApp = initializeApp(firebaseConfig);
+                    const auth = getAuth(fbApp);
+                    this.db = getFirestore(fbApp);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                        this.user = cred.user;
+                    } else {
+                        const cred = await signInAnonymously(auth);
+                        this.user = cred.user;
+                    }
+                    return true;
+                } catch (err) {
+                    console.warn('Chạy chế độ LocalStorage ngoại tuyến:', err);
+                    return false;
+                }
+            },
+            subscribeStore(storeId) {
+                if (!this.db || !this.user || !storeId) {
+                    updateCloudIndicator('LOCAL');
+                    return;
+                }
+                if (this.unsubscribe) this.unsubscribe();
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'smartmart-pos';
+                const storeRef = doc(this.db, 'artifacts', appId, 'public', 'data', 'stores', storeId);
+
+                updateCloudIndicator('SYNCING');
+                this.unsubscribe = onSnapshot(storeRef, (snap) => {
+                    updateCloudIndicator('LIVE');
+                    if (!snap.exists()) {
+                        this.pushState(storeId, window.getSerializableState());
+                        return;
+                    }
+                    const remoteData = snap.data();
+                    if (remoteData && remoteData.payload) {
+                        this.isApplyingRemote = true;
+                        window.applyRemoteCloudState(remoteData.payload, remoteData.lastEvent);
+                        this.isApplyingRemote = false;
+                    }
+                }, (error) => {
+                    console.error('Lỗi đồng bộ đám mây:', error);
+                    updateCloudIndicator('LOCAL');
+                });
+            },
+            async pushState(storeId, stateObj, eventNotice = '') {
+                if (!this.db || !this.user || !storeId || this.isApplyingRemote) return;
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smartmart-pos';
+                    const storeRef = doc(this.db, 'artifacts', appId, 'public', 'data', 'stores', storeId);
+                    await setDoc(storeRef, {
+                        payload: JSON.stringify(stateObj),
+                        updatedAt: Date.now(),
+                        lastEvent: eventNotice
+                    }, { merge: true });
+                } catch (err) {
+                    console.error('Không thể đẩy dữ liệu lên đám mây:', err);
+                }
+            }
+        };
+    </script>
+    <script>
+        // --- 1. DỮ LIỆU MẪU SIÊU THỊ VIỆT NAM THỰC TẾ (NÂNG CẤP CLOUD SYNC & PHÂN QUYỀN) ---
+        const STORAGE_KEY = 'SMARTMART_POS_DATA_V2';
+        const DEVICE_CONFIG_KEY = 'SMARTMART_DEVICE_ROLE_V1';
+
+        let deviceSession = {
+            storeId: 'SMARTMART-8899',
+            role: null, // 'CASHIER' | 'OWNER'
+            ownerPin: '1234'
+        };
+// ... existing code ...
+        // --- 4. KHỞI TẠO & LƯU TRỮ LOCALSTORAGE + ĐỒNG BỘ ĐÁM MÂY ---
+        async function initApp() {
+            const savedDevice = localStorage.getItem(DEVICE_CONFIG_KEY);
+            if (savedDevice) {
+                try {
+                    deviceSession = { ...deviceSession, ...JSON.parse(savedDevice) };
+                } catch (e) {}
+            }
+
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                    if (!appState.promotions) appState.promotions = JSON.parse(JSON.stringify(DEFAULT_PROMOTIONS));
+                    if (!appState.rewards) appState.rewards = JSON.parse(JSON.stringify(DEFAULT_REWARDS));
+                } catch (e) {
+                    seedInitialData();
+                }
+            } else {
+                seedInitialData();
+            }
+
+            document.getElementById('header-cashier').textContent = appState.cashier;
+            document.getElementById('setting-cashier').value = appState.cashier;
+            document.getElementById('gate-store-id').value = deviceSession.storeId;
+
+            renderPosCategories();
+            renderPosProducts();
+            updateCartUI();
+            updateHoldBadge();
+            updateLowStockBadge();
+            updateBirthdayBadge();
+
+            if (window.CloudSync) {
+                await window.CloudSync.init();
+            }
+
+            if (deviceSession.role) {
+                applyRolePermissions();
+                if (window.CloudSync) window.CloudSync.subscribeStore(deviceSession.storeId);
+            } else {
+                document.getElementById('modal-role-gate').classList.remove('hidden');
+            }
+        }
+
+        function saveDeviceConfig() {
+            localStorage.setItem(DEVICE_CONFIG_KEY, JSON.stringify(deviceSession));
+        }
+
+        function generateNewStoreId() {
+            const rand = Math.floor(1000 + Math.random() * 9000);
+            const code = `SMARTMART-${rand}`;
+            document.getElementById('gate-store-id').value = code;
+            showToast(`Đã tạo Mã Cửa Hàng mới: ${code}`, 'info');
+        }
+
+        function copyStoreId() {
+            const code = (document.getElementById('gate-store-id')?.value || deviceSession.storeId || '').trim().toUpperCase();
+            if (!code) return;
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast(`Đã sao chép Mã Cửa Hàng "${code}"!`, 'success');
+        }
+
+        function enterAppAsCashier() {
+            const storeId = document.getElementById('gate-store-id').value.trim().toUpperCase();
+            if (!storeId) {
+                showToast('Vui lòng nhập hoặc tạo Mã Cửa Hàng!', 'warning');
+                return;
+            }
+            deviceSession.storeId = storeId;
+            deviceSession.role = 'CASHIER';
+            saveDeviceConfig();
+
+            document.getElementById('modal-role-gate').classList.add('hidden');
+            applyRolePermissions();
+            if (window.CloudSync) window.CloudSync.subscribeStore(storeId);
+            showToast(`Đã kích hoạt Máy Quầy Thu Ngân (${storeId})`, 'success');
+        }
+
+        function enterAppAsOwner() {
+            const storeId = document.getElementById('gate-store-id').value.trim().toUpperCase();
+            const pin = document.getElementById('gate-owner-pin').value.trim();
+            if (!storeId) {
+                showToast('Vui lòng nhập Mã Cửa Hàng cần giám sát!', 'warning');
+                return;
+            }
+            const validPin = appState.ownerPin || deviceSession.ownerPin || '1234';
+            if (pin !== validPin) {
+                showToast('Mã PIN Chủ Cửa Hàng không chính xác!', 'error');
+                return;
+            }
+            deviceSession.storeId = storeId;
+            deviceSession.role = 'OWNER';
+            saveDeviceConfig();
+
+            document.getElementById('gate-owner-pin').value = '';
+            document.getElementById('modal-role-gate').classList.add('hidden');
+            applyRolePermissions();
+            if (window.CloudSync) window.CloudSync.subscribeStore(storeId);
+            switchTab('reports');
+            showToast(`Chào mừng Chủ Cửa Hàng! Đang giám sát ${storeId}`, 'success');
+        }
+
+        function openRoleSwitchModal() {
+            closeModal('modal-settings');
+            document.getElementById('gate-store-id').value = deviceSession.storeId;
+            document.getElementById('gate-owner-pin').value = '';
+            document.getElementById('modal-role-gate').classList.remove('hidden');
+        }
+
+        function updateOwnerPin() {
+            const newPin = document.getElementById('setting-new-pin').value.trim();
+            if (!/^\d{4}$/.test(newPin)) {
+                showToast('Mã PIN phải gồm đúng 4 chữ số!', 'warning');
+                return;
+            }
+            deviceSession.ownerPin = newPin;
+            appState.ownerPin = newPin;
+            saveDeviceConfig();
+            saveState('Cập nhật mã PIN bảo mật Chủ Shop');
+            document.getElementById('setting-new-pin').value = '';
+            showToast('Đã cập nhật mã PIN Chủ Cửa Hàng thành công!', 'success');
+        }
+
+        function applyRolePermissions() {
+            const isOwner = deviceSession.role === 'OWNER';
+            document.getElementById('header-role-badge').textContent = isOwner ? `Chủ Shop • ${deviceSession.storeId}` : `Quầy Thu Ngân • ${deviceSession.storeId}`;
+            document.getElementById('btn-role-label').textContent = isOwner ? 'Khóa quầy' : 'Chủ Shop';
+            document.getElementById('btn-header-settings').classList.toggle('hidden', !isOwner);
+            document.getElementById('settings-store-id-display').textContent = deviceSession.storeId;
+
+            // Ẩn tab Kho hàng & Báo cáo doanh thu khi ở chế độ Máy Quầy Thu Ngân
+            document.querySelectorAll('.owner-only-nav').forEach(el => {
+                el.classList.toggle('hidden', !isOwner);
+            });
+
+            if (!isOwner) {
+                switchTab('pos');
+            }
+        }
+
+        function updateCloudIndicator(status) {
+            const dot = document.getElementById('cloud-status-dot');
+            const text = document.getElementById('cloud-status-text');
+            if (!dot || !text) return;
+            if (status === 'LIVE') {
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+                text.textContent = 'Đám mây Live';
+            } else if (status === 'SYNCING') {
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping';
+                text.textContent = 'Đang đồng bộ...';
+            } else {
+                dot.className = 'w-1.5 h-1.5 rounded-full bg-sky-300';
+                text.textContent = 'Lưu tại máy';
+            }
+        }
+
+        window.getSerializableState = function () {
+            return appState;
+        };
+
+        window.applyRemoteCloudState = function (payloadStr, lastEvent) {
+            try {
+                const incoming = JSON.parse(payloadStr);
+                if (!incoming || !incoming.products) return;
+                const prevInvCount = appState.invoices ? appState.invoices.length : 0;
+                appState = incoming;
+                if (appState.ownerPin) {
+                    deviceSession.ownerPin = appState.ownerPin;
+                    saveDeviceConfig();
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+                renderPosProducts();
+                renderCrmCustomers();
+                renderPromotions();
+                renderRewardsCatalog();
+                renderInvoices();
+                renderProductManagement();
+                renderInventory();
+                if (deviceSession.role === 'OWNER') {
+                    renderReports();
+                }
+                updateLowStockBadge();
+                updateBirthdayBadge();
+
+                if (deviceSession.role === 'OWNER' && appState.invoices.length > prevInvCount) {
+                    const latest = appState.invoices[0];
+                    playBeepSound(1800, 0.12);
+                    showToast(`Đơn mới từ quầy: ${latest.id} (+${formatVND(latest.total)})`, 'success');
+                }
+            } catch (e) {
+                console.error('Lỗi giải mã dữ liệu đồng bộ:', e);
+            }
+        };
+// ... existing code ...
+        function saveState(eventNotice = '') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            updateLowStockBadge();
+            updateBirthdayBadge();
+            if (window.CloudSync && deviceSession.storeId) {
+                window.CloudSync.pushState(deviceSession.storeId, appState, eventNotice);
+            }
+        }
+// ... existing code ...
+        // --- 5. ĐIỀU HƯỚNG 6 TAB CHÍNH (CÓ KIỂM SOÁT PHÂN QUYỀN) ---
+        function switchTab(tabName) {
+            if (deviceSession.role === 'CASHIER' && (tabName === 'inventory' || tabName === 'reports')) {
+                showToast('Chức năng này chỉ dành cho Chủ Cửa Hàng!', 'warning');
+                return;
+            }
+            const tabs = ['pos', 'crm', 'invoices', 'products', 'inventory', 'reports'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+// ... existing code ...
