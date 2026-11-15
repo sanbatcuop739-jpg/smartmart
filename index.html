@@ -347,7 +347,7 @@
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <h1 class="font-bold text-sm tracking-tight truncate">Mini Mart 2 POS</h1>
+              <h1 id="header-brand" class="font-bold text-sm tracking-tight truncate">Mini Mart 2 POS</h1>
               <button id="btn-cloud-sync" onclick="openCloudSyncModal()" class="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-900/45 hover:bg-emerald-900/70 px-2 py-0.5 rounded-full border border-white/15 transition active:scale-95">
                 <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
                 <span id="sync-label">Cài Cloud</span>
@@ -468,7 +468,12 @@
 
     function getSharedPayload() {
       return {
+        branches: state.branches,
+        weeklySchedule: state.weeklySchedule,
+        staffList: state.staffList,
         categories: state.categories,
+        tierThresholds: state.tierThresholds,
+        promoSeq: state.promoSeq,
         promos: state.promos,
         products: state.products,
         customers: state.customers,
@@ -478,6 +483,7 @@
         shift: state.shift,
         redemptions: state.redemptions,
         careLogs: state.careLogs,
+        stockLogs: state.stockLogs,
         auditLogs: state.auditLogs,
         updatedAt: Date.now()
       };
@@ -485,7 +491,12 @@
 
     function applySharedPayload(data) {
       if (!data || typeof data !== 'object') return false;
+      if (Array.isArray(data.branches)) state.branches = data.branches;
+      if (data.weeklySchedule && typeof data.weeklySchedule === 'object') state.weeklySchedule = data.weeklySchedule;
+      if (Array.isArray(data.staffList)) state.staffList = data.staffList;
       if (Array.isArray(data.categories)) state.categories = data.categories;
+      if (data.tierThresholds && typeof data.tierThresholds === 'object') state.tierThresholds = data.tierThresholds;
+      if (typeof data.promoSeq === 'number') state.promoSeq = data.promoSeq;
       if (Array.isArray(data.promos)) state.promos = data.promos;
       if (Array.isArray(data.products)) state.products = data.products;
       if (Array.isArray(data.customers)) state.customers = data.customers;
@@ -495,6 +506,7 @@
       if (data.shift && typeof data.shift === 'object') state.shift = data.shift;
       if (Array.isArray(data.redemptions)) state.redemptions = data.redemptions;
       if (Array.isArray(data.careLogs)) state.careLogs = data.careLogs;
+      if (Array.isArray(data.stockLogs)) state.stockLogs = data.stockLogs;
       if (Array.isArray(data.auditLogs)) state.auditLogs = data.auditLogs;
       return true;
     }
@@ -654,6 +666,9 @@
     }
 
     function resetDemoData() {
+      state.branches = JSON.parse(JSON.stringify(INITIAL_BRANCHES));
+      state.weeklySchedule = JSON.parse(JSON.stringify(INITIAL_WEEKLY_SCHEDULE));
+      state.staffList = JSON.parse(JSON.stringify(INITIAL_STAFF));
       state.categories = JSON.parse(JSON.stringify(INITIAL_CATEGORIES));
       state.promos = JSON.parse(JSON.stringify(INITIAL_PROMOS));
       state.products = JSON.parse(JSON.stringify(INITIAL_PRODUCTS));
@@ -661,6 +676,7 @@
       state.gifts = JSON.parse(JSON.stringify(INITIAL_GIFTS));
       state.orders = JSON.parse(JSON.stringify(INITIAL_ORDERS));
       state.careLogs = JSON.parse(JSON.stringify(INITIAL_CARE_LOGS));
+      state.stockLogs = JSON.parse(JSON.stringify(INITIAL_STOCK_LOGS));
       state.auditLogs = JSON.parse(JSON.stringify(INITIAL_AUDIT_LOGS));
       state.heldBills = [];
       state.cart = [];
@@ -687,6 +703,25 @@
       { id: 'P14', barcode: '8934680005511', name: 'Snack Khoai tây Lay’s Vị Tự nhiên 95g', category: 'Bánh kẹo', price: 24000, cost: 18000, stock: 40, unit: 'Gói', emoji: '🥔' }
     ];
 
+    const INITIAL_BRANCHES = ['CN1 - Trảng Bàng', 'CN2 - Gò Dầu'];
+
+    const WEEK_DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+
+    const INITIAL_WEEKLY_SCHEDULE = {
+      'Thứ 2': { sang: 'Minh Anh', chieu: 'Quốc Huy', dem: '' },
+      'Thứ 3': { sang: 'Minh Anh', chieu: 'Quốc Huy', dem: '' },
+      'Thứ 4': { sang: 'Quốc Huy', chieu: 'Minh Anh', dem: '' },
+      'Thứ 5': { sang: 'Minh Anh', chieu: 'Quốc Huy', dem: '' },
+      'Thứ 6': { sang: 'Minh Anh', chieu: 'Quốc Huy', dem: '' },
+      'Thứ 7': { sang: 'Quốc Huy', chieu: 'Minh Anh', dem: '' },
+      'Chủ nhật': { sang: 'Minh Anh', chieu: 'Quốc Huy', dem: '' }
+    };
+
+    const INITIAL_STAFF = [
+      { id: 'NV01', name: 'Minh Anh', role: 'Ca trưởng', phone: '0901234567' },
+      { id: 'NV02', name: 'Quốc Huy', role: 'Thu ngân', phone: '0907654321' }
+    ];
+
     const INITIAL_CATEGORIES = ['Đồ uống', 'Thực phẩm', 'Hóa mỹ phẩm', 'Bánh kẹo', 'Tươi sống'];
 
     const INITIAL_PROMOS = [
@@ -696,11 +731,11 @@
     ];
 
     const INITIAL_CUSTOMERS = [
-      { id: 'C01', name: 'Nguyễn Thị Lan', phone: '0908123456', tier: 'Kim Cương', points: 1450, totalSpent: 18450000, visits: 34, birthday: '1988-11-18', lastVisit: '2026-11-14', note: 'Thích mua gạo ST25 & sữa ít đường', cared: false },
-      { id: 'C02', name: 'Trần Văn Hùng', phone: '0913456789', tier: 'Vàng', points: 620, totalSpent: 7850000, visits: 18, birthday: '1985-05-20', lastVisit: '2026-11-15', note: 'Hay mua đồ uống cuối tuần', cared: true },
-      { id: 'C03', name: 'Lê Hoàng Mai', phone: '0987654321', tier: 'Bạc', points: 285, totalSpent: 3420000, visits: 9, birthday: '1993-11-22', lastVisit: '2026-10-25', note: 'Chưa quay lại hơn 20 ngày - cần gửi voucher', cared: false },
-      { id: 'C04', name: 'Phạm Quốc Bảo', phone: '0939112233', tier: 'Vàng', points: 890, totalSpent: 9600000, visits: 21, birthday: '1990-02-10', lastVisit: '2026-11-12', note: 'Khách doanh nghiệp nhỏ, hay lấy hóa đơn', cared: false },
-      { id: 'C05', name: 'Võ Ngọc Ánh', phone: '0977889900', tier: 'Thành viên', points: 95, totalSpent: 1150000, visits: 4, birthday: '1996-11-15', lastVisit: '2026-11-10', note: 'Sinh nhật hôm nay!', cared: false }
+      { id: 'C01', name: 'Nguyễn Thị Lan', phone: '0908123456', cccd: '072188001234', tier: 'Kim Cương', points: 1450, totalSpent: 18450000, visits: 34, birthday: '1988-11-18', lastVisit: '2026-11-14', note: 'Thích mua gạo ST25 & sữa ít đường', cared: false },
+      { id: 'C02', name: 'Trần Văn Hùng', phone: '0913456789', cccd: '072085005678', tier: 'Vàng', points: 620, totalSpent: 7850000, visits: 18, birthday: '1985-05-20', lastVisit: '2026-11-15', note: 'Hay mua đồ uống cuối tuần', cared: true },
+      { id: 'C03', name: 'Lê Hoàng Mai', phone: '0987654321', cccd: '072193009911', tier: 'Bạc', points: 285, totalSpent: 3420000, visits: 9, birthday: '1993-11-22', lastVisit: '2026-10-25', note: 'Chưa quay lại hơn 20 ngày - cần gửi voucher', cared: false },
+      { id: 'C04', name: 'Phạm Quốc Bảo', phone: '0939112233', cccd: '072090003344', tier: 'Vàng', points: 890, totalSpent: 9600000, visits: 21, birthday: '1990-02-10', lastVisit: '2026-11-12', note: 'Khách doanh nghiệp nhỏ, hay lấy hóa đơn', cared: false },
+      { id: 'C05', name: 'Võ Ngọc Ánh', phone: '0977889900', cccd: '072196007788', tier: 'Thành viên', points: 95, totalSpent: 1150000, visits: 4, birthday: '1996-11-15', lastVisit: '2026-11-10', note: 'Sinh nhật hôm nay!', cared: false }
     ];
 
     const INITIAL_GIFTS = [
@@ -712,14 +747,22 @@
     ];
 
     const INITIAL_ORDERS = [
-      { id: 'HD-261115-01', time: '08:15', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C02', customerName: 'Trần Văn Hùng', items: [{ id: 'P01', name: 'Sữa tươi Vinamilk 100% Ít đường 1L', qty: 2, price: 36000, cost: 29500 }, { id: 'P07', name: 'Cà phê G7 3in1 Hòa tan', qty: 1, price: 62000, cost: 49000 }], subtotal: 134000, discount: 0, pointsUsed: 0, total: 134000, pointsEarned: 13, method: 'Tiền mặt', status: 'Hoàn thành' },
-      { id: 'HD-261115-02', time: '09:42', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C01', customerName: 'Nguyễn Thị Lan', items: [{ id: 'P06', name: 'Gạo ST25 Ông Cua Túi 5kg', qty: 2, price: 195000, cost: 165000 }, { id: 'P05', name: 'Nước giặt OMO Matic Cửa trước 3.6kg', qty: 1, price: 189000, cost: 152000 }], subtotal: 579000, discount: 50000, pointsUsed: 0, total: 529000, pointsEarned: 79, method: 'VietQR', status: 'Hoàn thành' },
-      { id: 'HD-261115-03', time: '11:05', branch: 'CN2 - Gò Dầu', cashier: 'Quốc Huy', customerId: null, customerName: 'Khách lẻ', items: [{ id: 'P02', name: 'Mì Hảo Hảo Tôm Chua Cay (Lốc 5)', qty: 3, price: 22500, cost: 18000 }, { id: 'P04', name: 'Nước suối Aquafina 500ml (Lốc 6)', qty: 2, price: 28000, cost: 21000 }], subtotal: 123500, discount: 0, pointsUsed: 0, total: 123500, pointsEarned: 0, method: 'Tiền mặt', status: 'Hoàn thành' },
-      { id: 'HD-261115-04', time: '12:30', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C04', customerName: 'Phạm Quốc Bảo', items: [{ id: 'P11', name: 'Dầu gội Clear Bạc Hà 630g', qty: 2, price: 168000, cost: 134000 }, { id: 'P13', name: 'Thịt ba rọi heo VietGAP Khay 500g', qty: 2, price: 82000, cost: 65000 }], subtotal: 500000, discount: 20000, pointsUsed: 0, total: 480000, pointsEarned: 58, method: 'Thẻ / Ví', status: 'Hoàn thành' }
+      { id: 'HD-261115-01', isoDate: '2026-11-14', time: '08:15', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C02', customerName: 'Trần Văn Hùng', items: [{ id: 'P01', name: 'Sữa tươi Vinamilk 100% Ít đường 1L', qty: 2, price: 36000, cost: 29500 }, { id: 'P07', name: 'Cà phê G7 3in1 Hòa tan', qty: 1, price: 62000, cost: 49000 }], subtotal: 134000, discount: 0, pointsUsed: 0, total: 134000, pointsEarned: 13, method: 'Tiền mặt', status: 'Hoàn thành' },
+      { id: 'HD-261115-02', isoDate: '2026-11-15', time: '09:42', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C01', customerName: 'Nguyễn Thị Lan', items: [{ id: 'P06', name: 'Gạo ST25 Ông Cua Túi 5kg', qty: 2, price: 195000, cost: 165000 }, { id: 'P05', name: 'Nước giặt OMO Matic Cửa trước 3.6kg', qty: 1, price: 189000, cost: 152000 }], subtotal: 579000, discount: 50000, pointsUsed: 0, total: 529000, pointsEarned: 79, method: 'VietQR', status: 'Hoàn thành' },
+      { id: 'HD-261115-03', isoDate: '2026-11-15', time: '11:05', branch: 'CN2 - Gò Dầu', cashier: 'Quốc Huy', customerId: null, customerName: 'Khách lẻ', items: [{ id: 'P02', name: 'Mì Hảo Hảo Tôm Chua Cay (Lốc 5)', qty: 3, price: 22500, cost: 18000 }, { id: 'P04', name: 'Nước suối Aquafina 500ml (Lốc 6)', qty: 2, price: 28000, cost: 21000 }], subtotal: 123500, discount: 0, pointsUsed: 0, total: 123500, pointsEarned: 0, method: 'Tiền mặt', status: 'Hoàn thành' },
+      { id: 'HD-261115-04', isoDate: '2026-11-15', time: '12:30', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C04', customerName: 'Phạm Quốc Bảo', items: [{ id: 'P11', name: 'Dầu gội Clear Bạc Hà 630g', qty: 2, price: 168000, cost: 134000 }, { id: 'P13', name: 'Thịt ba rọi heo VietGAP Khay 500g', qty: 2, price: 82000, cost: 65000 }], subtotal: 500000, discount: 20000, pointsUsed: 0, total: 480000, pointsEarned: 58, method: 'Thẻ / Ví', status: 'Hoàn thành' }
     ];
 
     const INITIAL_CARE_LOGS = [
       { id: 'CL01', time: '09:00', customerName: 'Trần Văn Hùng', channel: 'Zalo OA', message: 'Cảm ơn anh Hùng đã mua sắm tại SmartMart! Anh đang có 620 điểm tích lũy.' }
+    ];
+
+    const INITIAL_STOCK_LOGS = [
+      { id: 'SL01', isoDate: '2026-11-01', time: '08:00', type: 'import', prodName: 'Nhập hàng khai trương lô đầu', qty: 320, totalCost: 14500000 },
+      { id: 'SL02', isoDate: '2026-11-14', time: '08:15', type: 'export', prodName: 'Xuất bán HĐ HD-261115-01', qty: 3, totalCost: 108000 },
+      { id: 'SL03', isoDate: '2026-11-15', time: '09:42', type: 'export', prodName: 'Xuất bán HĐ HD-261115-02', qty: 3, totalCost: 482000 },
+      { id: 'SL04', isoDate: '2026-11-15', time: '11:05', type: 'export', prodName: 'Xuất bán HĐ HD-261115-03', qty: 5, totalCost: 96000 },
+      { id: 'SL05', isoDate: '2026-11-15', time: '12:30', type: 'export', prodName: 'Xuất bán HĐ HD-261115-04', qty: 4, totalCost: 398000 }
     ];
 
     const INITIAL_AUDIT_LOGS = [
@@ -747,7 +790,17 @@
       orderSearch: '',
       ownerBranch: 'Tất cả chi nhánh',
       ownerTimeframe: 'Hôm nay',
+      ownerChartMode: 'daily',
+      ownerStartDate: '2026-11-01',
+      ownerEndDate: '2026-11-30',
+      stockLogs: INITIAL_STOCK_LOGS,
+      storeInfo: { name: 'Mini Mart 2', address: 'KP. Lộc An, P. Trảng Bàng, Tây Ninh', phone: '0276.3888.999', branch: 'CN1 - Trảng Bàng', openingDate: '2026-11-01', footerNote: 'Cảm ơn Quý khách! Hẹn gặp lại!' },
+      branches: INITIAL_BRANCHES,
+      weeklySchedule: INITIAL_WEEKLY_SCHEDULE,
+      staffList: INITIAL_STAFF,
       categories: INITIAL_CATEGORIES,
+      tierThresholds: { diamond: 1200, gold: 500, silver: 200 },
+      promoSeq: 0,
       promos: INITIAL_PROMOS,
       products: INITIAL_PRODUCTS,
       customers: INITIAL_CUSTOMERS,
@@ -756,14 +809,18 @@
       heldBills: [],
       cart: [],
       selectedCustomerId: null,
+      checkoutGuest: { phone: '', name: '', cccd: '' },
       promoCode: '',
       usePoints: false,
       customDiscount: 0,
+      orderMethodFilter: 'Tất cả',
       shift: {
         id: 'CA-261115-S',
         cashier: 'Minh Anh',
         branch: 'CN1 - Trảng Bàng',
-        startTime: '07:55',
+        mode: 'auto',
+        startTime: '14:00',
+        endTime: '22:00',
         openingCash: 2000000,
         closed: false
       },
@@ -772,7 +829,33 @@
       auditLogs: INITIAL_AUDIT_LOGS
     };
 
+    function getAutoShiftWindow() {
+      const h = new Date().getHours();
+      if (h >= 6 && h < 14) return { label: 'Ca Sáng', start: '06:00', end: '14:00' };
+      if (h >= 14 && h < 22) return { label: 'Ca Chiều', start: '14:00', end: '22:00' };
+      return { label: 'Ca Đêm', start: '22:00', end: '06:00' };
+    }
+    if (!state.shift.mode) state.shift.mode = 'auto';
+    if (!state.shift.endTime) state.shift.endTime = '22:00';
+    if (!Array.isArray(state.stockLogs)) state.stockLogs = JSON.parse(JSON.stringify(INITIAL_STOCK_LOGS));
+    if (!state.ownerChartMode) state.ownerChartMode = 'daily';
+    if (!state.ownerStartDate) state.ownerStartDate = (state.storeInfo && state.storeInfo.openingDate) || '2026-11-01';
+    if (!state.ownerEndDate) state.ownerEndDate = getTodayStr();
+    if (!state.checkoutGuest) state.checkoutGuest = { phone: '', name: '', cccd: '' };
+    if (!state.orderMethodFilter) state.orderMethodFilter = 'Tất cả';
+    if (state.shift.mode === 'auto') {
+      const w = getAutoShiftWindow();
+      state.shift.startTime = w.start;
+      state.shift.endTime = w.end;
+    }
+    if (!state.storeInfo) state.storeInfo = { name: 'Mini Mart 2', address: 'KP. Lộc An, P. Trảng Bàng, Tây Ninh', phone: '0276.3888.999', branch: 'CN1 - Trảng Bàng', openingDate: '2026-11-01', footerNote: 'Cảm ơn Quý khách! Hẹn gặp lại!' };
+    if (!state.storeInfo.openingDate) state.storeInfo.openingDate = '2026-11-01';
+    if (!Array.isArray(state.branches) || !state.branches.length) state.branches = JSON.parse(JSON.stringify(INITIAL_BRANCHES));
+    if (!state.weeklySchedule || typeof state.weeklySchedule !== 'object') state.weeklySchedule = JSON.parse(JSON.stringify(INITIAL_WEEKLY_SCHEDULE));
+    if (!Array.isArray(state.staffList) || !state.staffList.length) state.staffList = JSON.parse(JSON.stringify(INITIAL_STAFF));
     if (!Array.isArray(state.categories)) state.categories = JSON.parse(JSON.stringify(INITIAL_CATEGORIES));
+    if (!state.tierThresholds) state.tierThresholds = { diamond: 1200, gold: 500, silver: 200 };
+    if (typeof state.promoSeq !== 'number') state.promoSeq = 0;
     if (!Array.isArray(state.promos)) state.promos = JSON.parse(JSON.stringify(INITIAL_PROMOS));
 
     function saveState(skipCloud = false) {
@@ -786,6 +869,11 @@
     // 2. HELPERS & SOUND / TOAST / MODAL
     // ==========================================
     const fmt = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
+
+    function playSuccessBeep() {
+      playBeep(1400, 0.08);
+      setTimeout(() => playBeep(1850, 0.14), 95);
+    }
 
     function playBeep(freq = 1200, duration = 0.07) {
       try {
@@ -832,8 +920,103 @@
     }
 
     document.getElementById('modal-root').addEventListener('click', (e) => {
-      if (e.target.id === 'modal-root') closeModal();
+      if (e.target.id === 'modal-root') { stopCameraScanner(); closeModal(); }
     });
+
+    function recalcCustomerTier(c) {
+      if (!c) return;
+      const th = state.tierThresholds || { diamond: 1200, gold: 500, silver: 200 };
+      if ((c.points || 0) >= Number(th.diamond || 1200)) c.tier = 'Kim Cương';
+      else if ((c.points || 0) >= Number(th.gold || 500)) c.tier = 'Vàng';
+      else if ((c.points || 0) >= Number(th.silver || 200)) c.tier = 'Bạc';
+      else c.tier = 'Thành viên';
+    }
+
+    function recalcAllCustomerTiers() {
+      (state.customers || []).forEach(c => recalcCustomerTier(c));
+    }
+
+    function getMemberTopRanking(pr) {
+      const sDate = pr.startDate || '';
+      const eDate = pr.endDate || '';
+      const target = pr.memberTier || 'Tất cả';
+      const scored = (state.customers || [])
+        .filter(c => target === 'Tất cả' || c.tier === target)
+        .map(c => {
+          const periodPts = (state.orders || [])
+            .filter(o => o.status === 'Hoàn thành' && o.customerId === c.id && (!sDate || (o.isoDate || '') >= sDate) && (!eDate || (o.isoDate || '') <= eDate))
+            .reduce((s, o) => s + (o.pointsEarned || 0), 0);
+          return { customer: c, racePoints: periodPts };
+        })
+        .sort((a, b) => b.racePoints - a.racePoints);
+      const topN = Math.max(1, Number(pr.memberTopN || 3));
+      return scored.slice(0, topN);
+    }
+
+    function openTopRaceModal(promoId) {
+      const pr = state.promos.find(p => p.id === promoId);
+      if (!pr) return;
+      const list = getMemberTopRanking(pr);
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">🏆 Bảng Xếp Hạng Đua Top (${pr.code})</h3>
+            <button onclick="openPromoManagerModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-900">
+            <b>${pr.name}</b> • Top ${pr.memberTopN || 3} thành viên cao điểm nhất
+            ${(pr.startDate || pr.endDate) ? ` (${pr.startDate || '...'} → ${pr.endDate || '...'})` : ''}
+          </div>
+          <div class="space-y-2 max-h-72 overflow-y-auto">
+            ${list.length === 0 ? '<p class="text-center text-xs text-slate-400 py-4">Chưa có thành viên phù hợp</p>' : list.map((row, i) => `
+              <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-6 h-6 rounded-full ${i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-slate-300 text-slate-800' : 'bg-amber-100 text-amber-800'} flex items-center justify-center text-xs font-extrabold shrink-0">#${i + 1}</span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-800 truncate">${row.customer.name}</div>
+                    <div class="text-[10px] text-slate-500">${row.customer.phone} • Hạng ${row.customer.tier}</div>
+                  </div>
+                </div>
+                <span class="text-xs font-extrabold text-emerald-700 shrink-0">${row.racePoints} điểm</span>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="notifyZaloForMemberPromo(state.promos.find(p=>p.id==='${pr.id}')); openPromoManagerModal();" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold">📲 Thông báo Zalo trao thưởng Top ${pr.memberTopN || 3}</button>
+        </div>
+      `);
+    }
+
+    function getCustomerMemberPromos(c) {
+      if (!c) return [];
+      return (state.promos || []).filter(pr => {
+        if (pr.type !== 'member_tier' || !getPromoStatus(pr).valid) return false;
+        const target = pr.memberTier || 'Tất cả';
+        const matchTier = target === 'Tất cả' || c.tier === target;
+        if (!matchTier) return false;
+        if (pr.memberMode === 'top_race') {
+          return getMemberTopRanking(pr).some(r => r.customer.id === c.id);
+        }
+        return (c.points || 0) >= Number(pr.memberMinPts || 0);
+      });
+    }
+
+    function notifyZaloForMemberPromo(pr, silent = false) {
+      if (!pr || pr.type !== 'member_tier') return 0;
+      const targets = pr.memberMode === 'top_race'
+        ? getMemberTopRanking(pr).map(r => r.customer).filter(c => c.phone)
+        : (state.customers || []).filter(c => {
+            if (!c.phone) return false;
+            const target = pr.memberTier || 'Tất cả';
+            return (target === 'Tất cả' || c.tier === target) && (c.points || 0) >= Number(pr.memberMinPts || 0);
+          });
+      const time = new Date().toTimeString().slice(0, 5);
+      targets.forEach(c => {
+        const msg = `[Tự động Zalo ${c.phone}] Chào ${c.name} (Hạng ${c.tier} - ${c.points} điểm), bạn nhận được "${pr.name}" (${pr.code})${pr.startDate || pr.endDate ? ` từ ${pr.startDate || '...'} đến ${pr.endDate || '...'}` : ''}!`;
+        state.careLogs.unshift({ id: 'CL' + Date.now() + Math.random(), time, customerName: `${c.name} (${c.phone})`, channel: 'Zalo OA (Tự động)', message: msg });
+      });
+      if (!silent && targets.length > 0) showToast(`📲 Đã tự động gửi thông báo Zalo tới ${targets.length} khách hàng đủ điều kiện!`);
+      return targets.length;
+    }
 
     function getTierMultiplier(tier) {
       if (tier === 'Kim Cương') return 1.5;
@@ -850,6 +1033,43 @@
         'Thành viên': 'bg-emerald-50 text-emerald-700 border-emerald-200'
       };
       return map[tier] || map['Thành viên'];
+    }
+
+    function generateAutoPromoCode(startDateStr, seqNum) {
+      const d = (startDateStr && /^\d{4}-\d{2}-\d{2}$/.test(startDateStr)) ? startDateStr : getTodayStr();
+      const yy = d.slice(2, 4);
+      const mm = d.slice(5, 7);
+      const seq = String(seqNum).padStart(2, '0');
+      return `MN${seq}${mm}${yy}`;
+    }
+
+    function isPromoConditionMet(pr, subtotal) {
+      if (!getPromoStatus(pr).valid) return false;
+      if (pr.type === 'member_tier') {
+        const cust = state.customers.find(c => c.id === state.selectedCustomerId);
+        if (!cust) return false;
+        const target = pr.memberTier || 'Tất cả';
+        if (target !== 'Tất cả' && cust.tier !== target) return false;
+        if (pr.memberMode === 'top_race') {
+          if (!getMemberTopRanking(pr).some(r => r.customer.id === cust.id)) return false;
+        } else if ((cust.points || 0) < Number(pr.memberMinPts || 0)) return false;
+      }
+      if (subtotal < (pr.minOrder || 0)) return false;
+      if ((pr.condMode === 'combo' || pr.condMode === 'both') && Array.isArray(pr.comboIds) && pr.comboIds.length > 0) {
+        if (!pr.comboIds.every(pid => state.cart.some(ci => ci.id === pid))) return false;
+      }
+      if (pr.type === 'product_promo') {
+        if (!pr.targetProdId || !state.cart.some(ci => ci.id === pr.targetProdId)) return false;
+      }
+      const scope = pr.scope || 'all';
+      if (scope !== 'all') {
+        const hasCatItem = state.cart.some(item => {
+          const p = state.products.find(x => x.id === item.id);
+          return p && p.category === scope;
+        });
+        if (!hasCatItem) return false;
+      }
+      return true;
     }
 
     function getTodayStr() {
@@ -869,20 +1089,56 @@
       const subtotal = state.cart.reduce((s, item) => s + item.price * item.qty, 0);
       let promoDiscount = 0;
       let bonusPoints = 0;
+      const eligiblePromos = (state.promos || []).filter(pr => isPromoConditionMet(pr, subtotal));
       const code = (state.promoCode || '').trim().toUpperCase();
-      const matchedPromo = (state.promos || []).find(pr => getPromoStatus(pr).valid && pr.code.toUpperCase() === code);
-      if (matchedPromo && subtotal >= (matchedPromo.minOrder || 0)) {
-        const scope = matchedPromo.scope || 'all';
-        const eligibleSub = scope === 'all'
-          ? subtotal
-          : state.cart.reduce((s, item) => {
-              const p = state.products.find(x => x.id === item.id);
-              return s + (p && p.category === scope ? item.price * item.qty : 0);
-            }, 0);
-        if (matchedPromo.type === 'percent') promoDiscount = Math.round(eligibleSub * (matchedPromo.value / 100));
-        else if (matchedPromo.type === 'fixed' || matchedPromo.type === 'custom') promoDiscount = Math.min(eligibleSub, matchedPromo.value || 0);
-        else if (matchedPromo.type === 'gift_points') bonusPoints = matchedPromo.value;
+      const manualMatch = code ? eligiblePromos.find(pr => pr.code.toUpperCase() === code) : null;
+
+      let bestDiscPromo = manualMatch && manualMatch.type !== 'custom' ? manualMatch : null;
+      let bestDiscVal = 0;
+      const calcPromoVal = (pr) => {
+        const scope = pr.scope || 'all';
+        const elSub = scope === 'all' ? subtotal : state.cart.reduce((s, item) => {
+          const p = state.products.find(x => x.id === item.id);
+          return s + (p && p.category === scope ? item.price * item.qty : 0);
+        }, 0);
+        if (pr.type === 'percent') return Math.round(elSub * (pr.value / 100));
+        if (pr.type === 'fixed') return Math.min(elSub, pr.value || 0);
+        if (pr.type === 'member_tier') {
+          if (pr.memberDiscType === 'fixed') return Math.min(elSub, pr.value || 0);
+          if (pr.memberDiscType === 'percent') return Math.round(elSub * ((pr.value || 0) / 100));
+          return 0;
+        }
+        if (pr.type === 'product_promo') {
+          const ci = state.cart.find(item => item.id === pr.targetProdId);
+          if (!ci) return 0;
+          const lineTotal = ci.price * ci.qty;
+          if (pr.prodDiscType === 'fixed') return Math.min(lineTotal, (pr.value || 0) * ci.qty);
+          if (pr.prodDiscType === 'flat_price') return Math.max(0, (ci.price - (pr.value || 0)) * ci.qty);
+          return Math.round(lineTotal * ((pr.value || 0) / 100));
+        }
+        return 0;
+      };
+
+      if (bestDiscPromo) {
+        bestDiscVal = calcPromoVal(bestDiscPromo);
+      } else {
+        eligiblePromos.filter(pr => pr.type === 'percent' || pr.type === 'fixed' || pr.type === 'member_tier' || pr.type === 'product_promo').forEach(pr => {
+          const v = calcPromoVal(pr);
+          if (v > bestDiscVal) { bestDiscVal = v; bestDiscPromo = pr; }
+        });
       }
+      promoDiscount = bestDiscVal;
+
+      eligiblePromos.filter(pr => pr.type === 'gift_points').forEach(pr => {
+        bonusPoints += (pr.value || 0);
+      });
+
+      const eligibleCustomPromos = eligiblePromos.filter(pr => pr.type === 'custom');
+      const autoCustomPromo = (manualMatch && manualMatch.type === 'custom')
+        ? manualMatch
+        : (eligibleCustomPromos[0] || null);
+
+      const appliedPromo = autoCustomPromo || bestDiscPromo || eligiblePromos.find(pr => pr.type === 'gift_points') || null;
       const extraCustom = Math.max(0, Number(state.customDiscount || 0));
       promoDiscount = Math.min(subtotal, promoDiscount + extraCustom);
 
@@ -898,10 +1154,9 @@
 
       const total = Math.max(0, subtotal - promoDiscount - pointsDiscount);
       const mult = customer ? getTierMultiplier(customer.tier) : 1;
-      const pointsEarned = customer ? (Math.floor((total / 10000) * mult) + bonusPoints) : 0;
+      const pointsEarned = (customer || (state.checkoutGuest && (state.checkoutGuest.phone || state.checkoutGuest.name || state.checkoutGuest.cccd))) ? (Math.floor((total / 1000) * mult) + bonusPoints) : 0;
 
-      const appliedPromo = (matchedPromo && subtotal >= (matchedPromo.minOrder || 0)) ? matchedPromo : null;
-      return { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, extraCustom };
+      return { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, eligibleCustomPromos, extraCustom };
     }
 
     // ==========================================
@@ -917,6 +1172,8 @@
         btn.className = `nav-btn flex flex-col items-center justify-center gap-0.5 transition ${isAct ? 'text-emerald-600 font-bold' : 'text-slate-500 font-medium'}`;
       });
 
+      const brandEl = document.getElementById('header-brand');
+      if (brandEl && state.storeInfo) brandEl.textContent = state.storeInfo.name + ' POS';
       const roleText = document.getElementById('role-switch-text');
       const headerSub = document.getElementById('header-subtitle');
       if (state.activeTab === 'owner') {
@@ -985,7 +1242,7 @@
                 <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">👤</span>
                 <div class="min-w-0">
                   <div class="text-xs font-semibold text-slate-800 truncate">${cust ? cust.name : 'Chọn khách thành viên'}</div>
-                  <div class="text-[10px] text-slate-500">${cust ? `${cust.tier} • ${cust.points} điểm` : 'Tích điểm & áp ưu đãi'}</div>
+                  <div class="text-[10px] text-slate-500 truncate">${cust ? `${cust.tier} • ${cust.points} điểm${getCustomerMemberPromos(cust).length ? ' • 🎁 ' + getCustomerMemberPromos(cust)[0].name : ''}` : 'Tích điểm & áp ưu đãi'}</div>
                 </div>
               </div>
               <span class="text-[11px] font-semibold text-emerald-600 shrink-0">${cust ? 'Đổi' : '+ Chọn'}</span>
@@ -1032,7 +1289,7 @@
                   ${inCart ? `<span class="absolute -top-2 -right-1.5 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">${inCart.qty}</span>` : ''}
                   <div>
                     <div class="flex items-start justify-between gap-1 mb-1.5">
-                      <span class="text-2xl leading-none">${p.emoji}</span>
+                      ${p.image ? `<img src="${p.image}" alt="" class="w-10 h-10 rounded-lg object-cover border border-slate-200" />` : `<span class="text-2xl leading-none">${p.emoji}</span>`}
                       <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${p.stock === 0 ? 'bg-rose-100 text-rose-700' : low ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">Tồn: ${p.stock}</span>
                     </div>
                     <h3 class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug mb-1">${p.name}</h3>
@@ -1073,7 +1330,7 @@
         btn.addEventListener('click', () => addToCart(btn.dataset.add));
       });
 
-      document.getElementById('btn-scan-barcode').addEventListener('click', openScannerModal);
+      document.getElementById('btn-scan-barcode').addEventListener('click', () => openScannerModal('pos'));
       document.getElementById('btn-select-customer').addEventListener('click', openCustomerSelectModal);
       document.getElementById('btn-held-bills').addEventListener('click', openHeldBillsModal);
     }
@@ -1092,31 +1349,110 @@
         }
         existing.qty += 1;
       } else {
-        state.cart.push({ id: prod.id, name: prod.name, price: prod.price, cost: prod.cost, qty: 1, unit: prod.unit, emoji: prod.emoji });
+        state.cart.push({ id: prod.id, name: prod.name, price: prod.price, cost: prod.cost, qty: 1, unit: prod.unit, emoji: prod.emoji, image: prod.image || '' });
       }
       playBeep(1350, 0.06);
       render();
     }
 
-    function openScannerModal() {
+    let activeCamStream = null;
+    let activeScanTimer = null;
+
+    function stopCameraScanner() {
+      clearInterval(activeScanTimer);
+      activeScanTimer = null;
+      if (activeCamStream) {
+        activeCamStream.getTracks().forEach(t => t.stop());
+        activeCamStream = null;
+      }
+    }
+
+    function handleScannedBarcode(code, mode = 'pos') {
+      const clean = String(code || '').trim();
+      if (!clean) return;
+      const prod = state.products.find(p => p.barcode === clean);
+      if (mode === 'inventory') {
+        stopCameraScanner();
+        closeModal();
+        playBeep(1400, 0.08);
+        if (prod) {
+          openStockInModal(prod.id);
+          showToast(`Đã đọc mã: ${prod.name}`);
+        } else {
+          openAddProductModal(clean);
+          showToast(`Mã mới ${clean} — Nhập thông tin sản phẩm!`);
+        }
+        return;
+      }
+      if (prod) {
+        addToCart(prod.id);
+        showToast(`Đã thêm vào đơn: ${prod.name}`);
+      } else {
+        playBeep(450, 0.12);
+        showToast(`Không tìm thấy SP có mã ${clean}`, 'warn');
+      }
+    }
+
+    async function startCameraScanner(mode = 'pos') {
+      const video = document.getElementById('cam-video');
+      const statusEl = document.getElementById('cam-status');
+      if (!video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (statusEl) statusEl.textContent = 'Trình duyệt không hỗ trợ Camera trực tiếp — Dùng máy quét USB/Bluetooth hoặc nhập mã bên dưới.';
+        return;
+      }
+      try {
+        activeCamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = activeCamStream;
+        await video.play();
+        if ('BarcodeDetector' in window) {
+          const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'code_128', 'qr_code'] });
+          if (statusEl) statusEl.textContent = 'Đưa mã vạch vào khung đỏ để tự động quét...';
+          let lastCode = '';
+          let lastAt = 0;
+          activeScanTimer = setInterval(async () => {
+            try {
+              const codes = await detector.detect(video);
+              if (codes && codes.length > 0) {
+                const raw = codes[0].rawValue;
+                const now = Date.now();
+                if (raw && (raw !== lastCode || now - lastAt > 1800)) {
+                  lastCode = raw;
+                  lastAt = now;
+                  handleScannedBarcode(raw, mode);
+                }
+              }
+            } catch (e) {}
+          }, 350);
+        } else {
+          if (statusEl) statusEl.textContent = 'Camera đã bật (Thiết bị chưa hỗ trợ BarcodeDetector — Hãy dùng máy quét hoặc nhập mã thủ công).';
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = 'Chưa cấp quyền Camera — Dùng máy quét USB/Bluetooth hoặc chạm mã mẫu bên dưới.';
+      }
+    }
+
+    function openScannerModal(mode = 'pos') {
+      stopCameraScanner();
       openModal(`
-        <div class="p-4 space-y-3">
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-sm text-slate-900">Quét mã vạch EAN-13 (Camera)</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold px-2">✕</button>
+            <h3 class="font-bold text-sm text-slate-900">${mode === 'inventory' ? 'Quét mã vạch Nhập hàng' : 'Quét mã vạch Bán hàng'}</h3>
+            <button onclick="stopCameraScanner(); closeModal();" class="text-slate-400 hover:text-slate-600 text-lg font-bold px-2">✕</button>
           </div>
-          <div class="relative h-36 bg-slate-900 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white">
+          <div class="relative h-40 bg-slate-900 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white">
+            <video id="cam-video" playsinline muted class="absolute inset-0 w-full h-full object-cover opacity-80"></video>
             <div class="scanner-laser"></div>
-            <svg class="w-10 h-10 text-emerald-400 mb-1 opacity-80" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
-            </svg>
-            <p class="text-[11px] text-slate-300">Chạm vào mã vạch mẫu bên dưới để quét nhanh</p>
+            <p id="cam-status" class="relative z-10 text-[11px] text-white bg-slate-900/60 px-2.5 py-1 rounded-lg text-center mx-3">Đang khởi động Camera...</p>
           </div>
-          <div class="space-y-1.5 max-h-56 overflow-y-auto">
-            ${state.products.slice(0, 6).map(p => `
-              <button onclick="addToCart('${p.id}'); showToast('Đã quét: ${p.name}');" class="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:bg-emerald-50 text-left active:scale-[0.99]">
+          <div class="flex gap-1.5">
+            <input id="manual-scan-inp" type="text" placeholder="Quét bằng máy quét hoặc nhập mã vạch..." class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+            <button onclick="handleScannedBarcode(document.getElementById('manual-scan-inp').value, '${mode}'); document.getElementById('manual-scan-inp').value='';" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0">Đọc mã</button>
+          </div>
+          <div class="space-y-1.5 max-h-44 overflow-y-auto">
+            ${state.products.slice(0, 5).map(p => `
+              <button onclick="handleScannedBarcode('${p.barcode}', '${mode}')" class="w-full flex items-center justify-between p-2 rounded-xl border border-slate-200 hover:bg-emerald-50 text-left active:scale-[0.99]">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-lg">${p.emoji}</span>
+                  <span class="text-base">${p.emoji}</span>
                   <div class="min-w-0">
                     <div class="text-xs font-semibold text-slate-800 truncate">${p.name}</div>
                     <div class="text-[10px] font-mono text-slate-500">${p.barcode}</div>
@@ -1128,6 +1464,17 @@
           </div>
         </div>
       `);
+      const ms = document.getElementById('manual-scan-inp');
+      if (ms) {
+        ms.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleScannedBarcode(ms.value, mode);
+            ms.value = '';
+          }
+        });
+      }
+      startCameraScanner(mode);
     }
 
     function openCustomerSelectModal() {
@@ -1207,11 +1554,11 @@
     }
 
     // ---------- CART & CHECKOUT MODAL ----------
-    document.getElementById('btn-open-cart').addEventListener('click', () => openCartModal('Tiền mặt', ''));
+    document.getElementById('btn-open-cart').addEventListener('click', () => { state.selectedCustomerId = null; state.checkoutGuest = { phone: '', name: '', cccd: '' }; openCartModal('Tiền mặt', ''); });
 
     function openCartModal(paymentMethod = 'Tiền mặt', cashReceived = '') {
       if (state.cart.length === 0) { closeModal(); return; }
-      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, extraCustom } = calcCartTotals();
+      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, eligibleCustomPromos, extraCustom } = calcCartTotals();
       const cashNum = cashReceived === '' ? total : Number(cashReceived);
       const change = Math.max(0, cashNum - total);
 
@@ -1234,7 +1581,7 @@
               ${state.cart.map((item, idx) => `
                 <div class="flex items-center justify-between gap-2 bg-white p-2 rounded-xl border border-slate-100">
                   <div class="flex items-center gap-2 min-w-0">
-                    <span class="text-lg">${item.emoji}</span>
+                    ${item.image ? `<img src="${item.image}" alt="" class="w-8 h-8 rounded-lg object-cover shrink-0" />` : `<span class="text-lg">${item.emoji}</span>`}
                     <div class="min-w-0">
                       <div class="text-xs font-semibold text-slate-800 truncate">${item.name}</div>
                       <div class="text-[11px] text-emerald-700 font-semibold">${fmt(item.price)}</div>
@@ -1249,19 +1596,32 @@
               `).join('')}
             </div>
 
+            <!-- Khách hàng & Tự động chuyển Hội viên -->
+            <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-emerald-900">Thông tin Khách hàng (Tự động thành Hội viên)</span>
+                ${customer ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">${customer.tier} • ${customer.points}đ</span>` : `<span class="text-[10px] text-emerald-700">1.000đ = 1 điểm</span>`}
+              </div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <input id="chk-phone" type="tel" value="${customer ? customer.phone : (state.checkoutGuest?.phone || '')}" oninput="onCheckoutCustomerField('phone', this.value, '${paymentMethod}')" placeholder="Số điện thoại..." class="px-2.5 py-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-semibold" />
+                <input id="chk-cccd" type="text" value="${customer ? (customer.cccd || '') : (state.checkoutGuest?.cccd || '')}" oninput="onCheckoutCustomerField('cccd', this.value, '${paymentMethod}')" placeholder="Số CCCD..." class="px-2.5 py-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-mono" />
+              </div>
+              <input id="chk-name" type="text" value="${customer ? customer.name : (state.checkoutGuest?.name || '')}" oninput="onCheckoutCustomerField('name', this.value, '${paymentMethod}')" placeholder="Họ và tên khách hàng (tự hiện nếu là khách cũ)..." class="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-bold" />
+            </div>
+
             <!-- Promo & Points -->
             <div class="bg-slate-50 p-3 rounded-xl space-y-2 border border-slate-200">
-              <div class="flex gap-1.5">
-                <input id="promo-input" type="text" value="${state.promoCode}" placeholder="Nhập hoặc chạm mã khuyến mãi..." class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs uppercase" />
-                <button onclick="applyPromo('${paymentMethod}')" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold">Áp dụng</button>
-              </div>
-              <div class="flex gap-1.5 flex-wrap">
-                ${(state.promos || []).filter(pr => getPromoStatus(pr).valid).map(pr => `
-                  <button onclick="state.promoCode='${pr.code}'; openCartModal('${paymentMethod}');" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border ${state.promoCode === pr.code ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-200'}">${pr.image ? `<img src="${pr.image}" alt="" class="w-4 h-4 rounded object-cover" />` : ''}${pr.code} (${pr.type === 'percent' ? pr.value + '%' : pr.type === 'gift_points' ? '+' + pr.value + 'đ' : pr.type === 'custom' ? (pr.customRule || 'Tự tạo') : fmt(pr.value)})</button>
-                `).join('')}
-              </div>
+              ${appliedPromo ? `
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2 flex items-center gap-2">
+                  ${appliedPromo.image ? `<img src="${appliedPromo.image}" alt="" class="w-7 h-7 rounded object-cover shrink-0" />` : `<span class="text-sm">✨</span>`}
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-bold text-emerald-800">Tự động áp dụng: ${appliedPromo.code}</div>
+                    <div class="text-[10px] text-emerald-700 truncate">${appliedPromo.customRule || appliedPromo.name}${appliedPromo.raffleEnabled ? ' • Kèm mã dự thưởng' : ''}</div>
+                  </div>
+                </div>
+              ` : `<div class="text-[11px] text-slate-500">Chưa có CTKM tự động nào đủ điều kiện cho giỏ hàng này.</div>`}
               <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-200">
-                <span class="text-[11px] font-medium text-slate-600">Giảm giá tự do (đ):</span>
+                <span class="text-[11px] font-medium text-slate-600">Giảm giá thêm tại quầy (đ):</span>
                 <input type="number" min="0" value="${state.customDiscount || 0}" onchange="state.customDiscount=Math.max(0, Number(this.value||0)); openCartModal('${paymentMethod}');" class="w-28 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-right" />
               </div>
               ${customer ? `
@@ -1281,7 +1641,7 @@
                 <span>Tổng thanh toán:</span>
                 <span class="text-emerald-700">${fmt(total)}</span>
               </div>
-              ${customer ? `<div class="text-[11px] text-emerald-600 text-right">+${pointsEarned} điểm tích lũy sau đơn này</div>` : ''}
+              ${pointsEarned > 0 ? `<div class="text-[11px] text-emerald-600 text-right">+${pointsEarned} điểm tích lũy (1.000đ = 1 điểm)</div>` : ''}
             </div>
 
             <!-- Payment Method -->
@@ -1360,15 +1720,6 @@
       openCartModal(method);
     }
 
-    function applyPromo(method) {
-      const val = document.getElementById('promo-input')?.value || '';
-      state.promoCode = val.trim().toUpperCase();
-      const { promoDiscount } = calcCartTotals();
-      if (state.promoCode && promoDiscount === 0) showToast('Mã chưa hợp lệ hoặc chưa đạt giá trị tối thiểu', 'warn');
-      else if (promoDiscount > 0) showToast(`Đã giảm ${fmt(promoDiscount)}!`);
-      openCartModal(method);
-    }
-
     function holdCurrentBill() {
       const cust = state.customers.find(c => c.id === state.selectedCustomerId);
       const now = new Date();
@@ -1381,6 +1732,7 @@
       });
       state.cart = [];
       state.selectedCustomerId = null;
+      state.checkoutGuest = { phone: '', name: '', cccd: '' };
       state.promoCode = '';
       state.usePoints = false;
       state.customDiscount = 0;
@@ -1389,38 +1741,122 @@
       showToast('Đã treo đơn hàng tạm thời!');
     }
 
+    function onCheckoutCustomerField(field, val, method) {
+      if (!state.checkoutGuest) state.checkoutGuest = { phone: '', name: '', cccd: '' };
+      const clean = (val || '').trim();
+      state.checkoutGuest[field] = clean;
+
+      if (field === 'phone' || field === 'cccd') {
+        const found = state.customers.find(c =>
+          (field === 'phone' && clean.length >= 9 && c.phone === clean) ||
+          (field === 'cccd' && clean.length >= 9 && c.cccd && c.cccd === clean)
+        );
+        if (found) {
+          state.selectedCustomerId = found.id;
+          state.checkoutGuest = { phone: found.phone, name: found.name, cccd: found.cccd || '' };
+          const nameEl = document.getElementById('chk-name');
+          const phoneEl = document.getElementById('chk-phone');
+          const cccdEl = document.getElementById('chk-cccd');
+          if (nameEl) nameEl.value = found.name;
+          if (phoneEl && field !== 'phone') phoneEl.value = found.phone;
+          if (cccdEl && field !== 'cccd') cccdEl.value = found.cccd || '';
+          showToast(`Khách hàng cũ: ${found.name} (${found.points} điểm)`);
+        } else if (state.selectedCustomerId) {
+          const cur = state.customers.find(c => c.id === state.selectedCustomerId);
+          if (cur && ((field === 'phone' && cur.phone !== clean) || (field === 'cccd' && (cur.cccd || '') !== clean))) {
+            state.selectedCustomerId = null;
+          }
+        }
+      }
+    }
+
     function completeCheckout(method) {
       if (!state.cart || state.cart.length === 0) { showToast('Giỏ hàng đang trống!', 'warn'); return; }
-      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, extraCustom } = calcCartTotals();
+      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer, appliedPromo, eligibleCustomPromos, extraCustom } = calcCartTotals();
       state.cart.forEach(ci => {
         const p = state.products.find(pr => pr.id === ci.id);
         if (p) p.stock = Math.max(0, p.stock - ci.qty);
       });
-      if (customer) {
-        customer.points = Math.max(0, customer.points - pointsUsed) + pointsEarned;
-        customer.totalSpent += total;
-        customer.visits += 1;
-        customer.lastVisit = '2026-11-15';
-        if (customer.totalSpent >= 15000000) customer.tier = 'Kim Cương';
-        else if (customer.totalSpent >= 7000000) customer.tier = 'Vàng';
-        else if (customer.totalSpent >= 3000000) customer.tier = 'Bạc';
+      let activeCust = customer;
+      const gPhone = (state.checkoutGuest && state.checkoutGuest.phone || '').trim();
+      const gName = (state.checkoutGuest && state.checkoutGuest.name || '').trim();
+      const gCccd = (state.checkoutGuest && state.checkoutGuest.cccd || '').trim();
+      if (!activeCust && (gPhone || gCccd || gName)) {
+        activeCust = state.customers.find(c => (gPhone && c.phone === gPhone) || (gCccd && c.cccd && c.cccd === gCccd)) || null;
+        if (activeCust) {
+          if (gName && !activeCust.name) activeCust.name = gName;
+          if (gCccd && !activeCust.cccd) activeCust.cccd = gCccd;
+        } else {
+          activeCust = {
+            id: 'C' + Date.now(),
+            name: gName || ('Khách ' + (gPhone || gCccd)),
+            phone: gPhone,
+            cccd: gCccd,
+            tier: 'Thành viên',
+            points: 0,
+            totalSpent: 0,
+            visits: 0,
+            birthday: '',
+            lastVisit: getTodayStr(),
+            note: 'Tự động tạo hội viên khi thanh toán',
+            cared: false
+          };
+          state.customers.unshift(activeCust);
+        }
+      }
+      if (activeCust) {
+        activeCust.points = Math.max(0, activeCust.points - pointsUsed) + pointsEarned;
+        activeCust.totalSpent += total;
+        activeCust.visits += 1;
+        activeCust.lastVisit = getTodayStr();
+        recalcCustomerTier(activeCust);
       }
 
       const now = new Date();
       const time = now.toTimeString().slice(0, 5);
+      const raffleTickets = [];
+      (eligibleCustomPromos || []).forEach(pr => {
+        if (!pr.raffleEnabled) return;
+        const limit = Number(pr.raffleLimit || 0);
+        let issued = Number(pr.raffleIssued || 0);
+        const countToIssue = (pr.raffleMulti !== false && (pr.minOrder || 0) > 0)
+          ? Math.max(1, Math.floor(total / pr.minOrder))
+          : 1;
+        for (let k = 0; k < countToIssue; k++) {
+          if (limit > 0 && issued < limit) {
+            issued += 1;
+            pr.raffleIssued = issued;
+            raffleTickets.push({
+              code: String(issued).padStart(5, '0'),
+              limitStr: String(limit).padStart(5, '0'),
+              promoCode: pr.code,
+              promoName: pr.name,
+              promoRule: pr.customRule || pr.name,
+              drawTime: pr.drawTime || ''
+            });
+          }
+        }
+      });
+      const raffleCode = raffleTickets.length ? raffleTickets.map(t => t.code).join(', ') : '';
+      const raffleLimitStr = raffleTickets.length ? raffleTickets[0].limitStr : '';
+
       const orderId = `HD-261115-${String(state.orders.length + 1).padStart(2, '0')}`;
       const newOrder = {
         id: orderId,
+        isoDate: getTodayStr(),
         date: getTodayStr().split('-').reverse().join('/'),
         time,
         branch: state.shift.branch,
         cashier: state.shift.cashier,
-        customerId: customer ? customer.id : null,
-        customerName: customer ? customer.name : 'Khách lẻ',
+        customerId: activeCust ? activeCust.id : null,
+        customerName: activeCust ? activeCust.name : 'Khách lẻ',
         items: JSON.parse(JSON.stringify(state.cart)),
         subtotal,
         promoCode: appliedPromo ? appliedPromo.code : '',
         promoName: appliedPromo ? (appliedPromo.customRule ? `${appliedPromo.name} (${appliedPromo.customRule})` : appliedPromo.name) : (extraCustom > 0 ? 'Giảm giá tự do tại quầy' : ''),
+        raffleCode,
+        raffleLimitStr,
+        raffleTickets,
         discount: promoDiscount + pointsDiscount,
         pointsUsed,
         total,
@@ -1429,6 +1865,9 @@
         status: 'Hoàn thành'
       };
       state.orders.unshift(newOrder);
+      const exportQty = state.cart.reduce((s, i) => s + i.qty, 0);
+      const exportCost = state.cart.reduce((s, i) => s + (i.cost || i.price * 0.8) * i.qty, 0);
+      state.stockLogs.unshift({ id: 'SL' + Date.now(), isoDate: getTodayStr(), time, type: 'export', prodName: `Xuất bán ${orderId}`, qty: exportQty, totalCost: exportCost });
 
       if (promoDiscount > 0) {
         state.auditLogs.unshift({
@@ -1436,7 +1875,7 @@
           time,
           branch: state.shift.branch,
           staff: state.shift.cashier,
-          action: `Áp dụng mã ${state.promoCode}`,
+          action: `Áp dụng ${appliedPromo ? appliedPromo.code : 'Giảm giá quầy'}`,
           detail: `Giảm ${fmt(promoDiscount)} cho ${orderId}`,
           level: 'warn'
         });
@@ -1447,8 +1886,9 @@
       state.promoCode = '';
       state.usePoints = false;
       state.customDiscount = 0;
-      playBeep(1600, 0.12);
+      playSuccessBeep();
       render();
+      showToast(`✓ Thanh toán thành công • ${orderId} (${fmt(total)})`);
       openReceiptModal(newOrder);
     }
 
@@ -1461,8 +1901,9 @@
           </div>
           <div class="k80-receipt p-3.5 rounded-xl text-[11px] text-slate-800 space-y-2">
             <div class="text-center border-b border-dashed border-slate-300 pb-2">
-              <div class="font-bold text-sm">SIÊU THỊ MINI MART 2</div>
-              <div>${order.branch} • ĐT: 0276.3888.999</div>
+              <div class="font-bold text-sm uppercase">${(state.storeInfo && state.storeInfo.name) || "MINI MART 2"}</div>
+              ${state.storeInfo && state.storeInfo.address ? `<div class="text-[10px] text-slate-600">${state.storeInfo.address}</div>` : ''}
+              <div>${order.branch} • ĐT: ${(state.storeInfo && state.storeInfo.phone) || "0276.3888.999"}</div>
               <div class="font-bold mt-1">HÓA ĐƠN BÁN LẺ (K80)</div>
               <div>Số: ${order.id} • ${order.time} ${order.date || getTodayStr().split('-').reverse().join('/')}</div>
               <div>Thu ngân: ${order.cashier}</div>
@@ -1484,8 +1925,33 @@
               <div class="flex justify-between text-[10px]"><span>Thanh toán (${order.method}):</span><span>${fmt(order.total)}</span></div>
               ${order.pointsEarned > 0 ? `<div class="text-center font-semibold pt-1">Điểm tích lũy cộng thêm: +${order.pointsEarned} điểm</div>` : ''}
             </div>
+            ${(() => {
+              const tickets = Array.isArray(order.raffleTickets) && order.raffleTickets.length
+                ? order.raffleTickets
+                : (order.raffleCode ? [{ code: order.raffleCode, limitStr: order.raffleLimitStr || '00200', promoCode: order.promoCode || '', promoName: order.promoName || '', promoRule: order.promoName || '' }] : []);
+              if (!tickets.length) return '';
+              return `
+                <div class="rounded-xl border border-amber-400 bg-amber-50 overflow-hidden shadow-sm">
+                  <div class="bg-slate-900 text-amber-400 text-center py-1 px-2 text-[10px] font-extrabold uppercase tracking-tight">
+                    ★ PHIẾU MÃ DỰ THƯỞNG (${tickets.length} MÃ) ★
+                  </div>
+                  <div class="p-2.5 space-y-2">
+                    ${tickets.map(t => `
+                      <div class="bg-white border border-dashed border-amber-400 rounded-lg p-2 text-center space-y-0.5">
+                        <div class="text-[10px] font-bold text-emerald-700">${t.promoCode ? `[${t.promoCode}] ` : ''}${t.promoName || ''}</div>
+                        ${t.promoRule && t.promoRule !== t.promoName ? `<div class="text-[10px] text-slate-600">${t.promoRule}</div>` : ''}
+                        <div class="text-lg font-extrabold text-slate-900 font-mono py-0.5">${t.code}</div>
+                        <div class="text-[10px] text-slate-500">STT: ${t.code} / ${t.limitStr}</div>
+                        ${t.drawTime ? `<div class="text-[10px] font-semibold text-amber-800">⏰ Quay số: ${t.drawTime}</div>` : ''}
+                      </div>
+                    `).join('')}
+                    <div class="text-center text-[10px] text-amber-900 font-semibold">Quý khách giữ lại hóa đơn để đối chiếu trúng thưởng!</div>
+                  </div>
+                </div>
+              `;
+            })()}
             <div class="text-center text-[10px] text-slate-500 pt-2 border-t border-dashed border-slate-300">
-              Cảm ơn Quý khách! Hẹn gặp lại!
+              ${(state.storeInfo && state.storeInfo.footerNote) || 'Cảm ơn Quý khách! Hẹn gặp lại!'}
             </div>
           </div>
           <div class="grid grid-cols-2 gap-2">
@@ -1522,18 +1988,40 @@
               <span class="text-xs font-bold text-slate-700">Tổng ${state.customers.length} hội viên</span>
               <button id="btn-new-customer" class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold shadow-sm">+ Thêm hội viên</button>
             </div>
-            ${state.customers.map(c => `
+            ${(() => {
+              const activeTop = (state.promos || []).find(pr => pr.type === 'member_tier' && pr.memberMode === 'top_race' && getPromoStatus(pr).valid);
+              const rows = state.customers.map(c => {
+                let racePts = null;
+                if (activeTop) {
+                  const sD = activeTop.startDate || '';
+                  const eD = activeTop.endDate || '';
+                  racePts = (state.orders || [])
+                    .filter(o => o.status === 'Hoàn thành' && o.customerId === c.id && (!sD || (o.isoDate || '') >= sD) && (!eD || (o.isoDate || '') <= eD))
+                    .reduce((s, o) => s + (o.pointsEarned || 0), 0);
+                }
+                return { c, racePts };
+              });
+              if (activeTop) rows.sort((a, b) => (b.racePts || 0) - (a.racePts || 0));
+              return (activeTop ? `<div class="bg-amber-50 border border-amber-200 p-2 rounded-xl text-[11px] text-amber-900 font-semibold">🏆 Đang xếp hạng Đua Top (${activeTop.code}) từ cao → thấp</div>` : '') +
+              rows.map(({ c, racePts }, rIdx) => `
               <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                 <div class="flex items-start justify-between gap-2">
                   <div>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      ${activeTop ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${rIdx < (activeTop.memberTopN || 3) ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-700'}">#${rIdx + 1}</span>` : ''}
                       <span class="text-sm font-bold text-slate-900">${c.name}</span>
                       <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTierBadge(c.tier)}">${c.tier}</span>
                     </div>
+                    ${(() => {
+                      const mps = getCustomerMemberPromos(c);
+                      if (!mps.length) return '';
+                      return `<div class="flex gap-1 flex-wrap mt-1">${mps.map(mp => `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">🎁 ${mp.name}</span>`).join('')}</div>`;
+                    })()}
                     <div class="text-xs text-slate-500 mt-0.5">${c.phone} • ${c.visits} lượt mua</div>
                   </div>
-                  <div class="text-right">
-                    <div class="text-sm font-extrabold text-amber-600">${c.points} điểm</div>
+                  <div class="text-right shrink-0">
+                    ${activeTop ? `<div class="text-xs font-extrabold text-emerald-700">🏆 Đua top: ${racePts}đ</div>` : ''}
+                    <div class="text-sm font-extrabold text-amber-600">Tổng: ${c.points}đ</div>
                     <div class="text-[10px] text-slate-400">Chi: ${fmt(c.totalSpent)}</div>
                   </div>
                 </div>
@@ -1544,7 +2032,8 @@
                   <button onclick="openCareMessageModal('${c.id}')" class="flex-1 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">Gửi Zalo</button>
                 </div>
               </div>
-            `).join('')}
+            `).join('');
+            })()}
           </div>
         `;
         document.getElementById('btn-new-customer').addEventListener('click', openAddCustomerModal);
@@ -1606,21 +2095,31 @@
           render();
         });
       } else {
+        const curMonth = getTodayStr().slice(5, 7);
+        const autoCareList = state.customers.filter(c => {
+          if (c.cared) return false;
+          const isBdayMonth = c.birthday && c.birthday.slice(5, 7) === curMonth;
+          const hasPointsMilestone = (c.points || 0) >= 100;
+          return isBdayMonth || hasPointsMilestone;
+        });
         body.innerHTML = `
           <div class="space-y-3">
-            <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl">
-              <div class="text-xs font-bold text-blue-900">Chiến dịch Chăm sóc tự động hôm nay</div>
-              <div class="text-[11px] text-blue-700 mt-0.5">Phát hiện khách sinh nhật & khách lâu chưa quay lại để gửi ưu đãi 1 chạm.</div>
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl space-y-1">
+              <div class="text-xs font-bold text-blue-900">Chăm sóc tự động: Sinh nhật & Tích điểm (1.000đ = 1 điểm)</div>
+              <div class="text-[11px] text-blue-700">Chỉ tự động nhắc khách có <b>sinh nhật tháng ${curMonth}</b> và khách <b>đủ mốc tích lũy điểm</b>. Các CTKM tích điểm đổi quà khác do Chủ shop tự thiết lập trong mục Khuyến mãi.</div>
             </div>
-            ${state.customers.filter(c => !c.cared).map(c => `
-              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="text-xs font-bold text-slate-900">${c.name} <span class="text-[10px] font-normal text-slate-500">(${c.tier})</span></div>
-                  <div class="text-[11px] text-slate-600 truncate">${c.note}</div>
+            ${autoCareList.map(c => {
+              const isBday = c.birthday && c.birthday.slice(5, 7) === curMonth;
+              return `
+                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-900">${c.name} <span class="text-[10px] font-normal text-slate-500">(${c.tier} • ${c.points} điểm)</span></div>
+                    <div class="text-[11px] text-slate-600 truncate">${isBday ? '🎂 Sinh nhật tháng ' + curMonth + ' • ' : ''}⭐ Đạt ${c.points} điểm tích lũy</div>
+                  </div>
+                  <button onclick="openCareMessageModal('${c.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold shrink-0">Gửi chăm sóc</button>
                 </div>
-                <button onclick="openCareMessageModal('${c.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold shrink-0">Gửi chăm sóc</button>
-              </div>
-            `).join('') || '<p class="text-center text-xs text-emerald-600 py-4 font-semibold">✓ Đã chăm sóc hết danh sách hôm nay!</p>'}
+              `;
+            }).join('') || '<p class="text-center text-xs text-emerald-600 py-4 font-semibold">✓ Đã chăm sóc hết danh sách sinh nhật & tích điểm!</p>'}
 
             <div class="bg-white p-3 rounded-2xl border border-slate-200">
               <div class="text-xs font-bold text-slate-800 mb-2">Nhật ký chăm sóc đã gửi</div>
@@ -1664,6 +2163,8 @@
           <div class="space-y-2">
             <input id="nc-name" type="text" placeholder="Họ và tên khách hàng" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
             <input id="nc-phone" type="tel" placeholder="Số điện thoại (VD: 0909123456)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <input id="nc-cccd" type="text" placeholder="Số CCCD (không bắt buộc)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <input id="nc-bday" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
             <input id="nc-note" type="text" placeholder="Ghi chú sở thích / thói quen mua sắm" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
           </div>
           <button onclick="submitNewCustomer()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu hội viên (+50 điểm chào mừng)</button>
@@ -1674,12 +2175,19 @@
     function submitNewCustomer() {
       const name = document.getElementById('nc-name').value.trim();
       const phone = document.getElementById('nc-phone').value.trim();
+      const cccd = (document.getElementById('nc-cccd')?.value || '').trim();
+      const bday = document.getElementById('nc-bday')?.value || '';
       const note = document.getElementById('nc-note').value.trim();
       if (!name || !phone) { showToast('Vui lòng nhập tên và SĐT', 'warn'); return; }
+      const dup = state.customers.find(c => c.phone === phone || (cccd && c.cccd && c.cccd === cccd));
+      if (dup) {
+        showToast(`Trùng SĐT hoặc CCCD với hội viên "${dup.name}" — không thêm mới!`, 'warn');
+        return;
+      }
       state.customers.unshift({
         id: 'C' + Date.now(),
-        name, phone, tier: 'Thành viên', points: 50, totalSpent: 0, visits: 0,
-        birthday: '1995-01-01', lastVisit: '2026-11-15', note: note || 'Khách hàng mới', cared: false
+        name, phone, cccd, tier: 'Thành viên', points: 50, totalSpent: 0, visits: 0,
+        birthday: bday, lastVisit: getTodayStr(), note: note || 'Khách hàng mới', cared: false
       });
       closeModal();
       render();
@@ -1746,16 +2254,17 @@
             </div>
           </div>
 
-          <div class="flex gap-2">
-            <input id="inv-search-input" type="text" value="${state.invSearch}" placeholder="Tìm sản phẩm trong kho..." class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs" />
-            <button onclick="openAddProductModal()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shrink-0">+ Thêm SP</button>
+          <div class="flex gap-1.5">
+            <input id="inv-search-input" type="text" value="${state.invSearch}" placeholder="Tìm hoặc quét mã vạch nhập kho..." class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs" />
+            <button onclick="openScannerModal('inventory')" class="px-2.5 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold shrink-0">📷 Quét</button>
+            <button onclick="openAddProductModal()" class="px-2.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shrink-0">+ Thêm</button>
           </div>
 
           <div class="space-y-2">
             ${filtered.map(p => `
               <div class="bg-white p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="text-2xl">${p.emoji}</span>
+                  ${p.image ? `<img src="${p.image}" alt="" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />` : `<span class="text-2xl">${p.emoji}</span>`}
                   <div class="min-w-0">
                     <div class="text-xs font-bold text-slate-800 truncate">${p.name}</div>
                     <div class="text-[11px] text-slate-500">Giá bán: ${fmt(p.price)} • Vốn: ${fmt(p.cost)}</div>
@@ -1780,18 +2289,57 @@
       });
     }
 
+    let tempProductImage = '';
+
+    function handleProductPhotoCapture(input, previewId) {
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+          const maxSide = 160;
+          let w = img.width, h = img.height;
+          if (w > h && w > maxSide) { h = Math.round(h * maxSide / w); w = maxSide; }
+          else if (h >= w && h > maxSide) { w = Math.round(w * maxSide / h); h = maxSide; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          tempProductImage = canvas.toDataURL('image/jpeg', 0.78);
+          const prev = document.getElementById(previewId);
+          if (prev) { prev.src = tempProductImage; prev.classList.remove('hidden'); }
+          showToast('Đã chụp/tải ảnh sản phẩm!');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function openStockInModal(prodId) {
       const p = state.products.find(x => x.id === prodId);
       if (!p) return;
+      tempProductImage = p.image || '';
       openModal(`
         <div class="p-4 space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-sm">Nhập kho: ${p.name}</h3>
             <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
           </div>
-          <div class="text-xs text-slate-500">Tồn hiện tại: <b>${p.stock} ${p.unit}</b></div>
-          <input id="si-qty" type="number" value="20" min="1" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold" />
-          <button onclick="confirmStockIn('${p.id}')" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Xác nhận nhập kho</button>
+          <div class="text-xs text-slate-500">Mã vạch: <span class="font-mono">${p.barcode}</span> • Tồn: <b>${p.stock} ${p.unit}</b></div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">Số lượng nhập thêm:</label>
+            <input id="si-qty" type="number" value="20" min="1" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold" />
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <img id="si-img-preview" src="${tempProductImage}" alt="" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0 ${tempProductImage ? '' : 'hidden'}" />
+              <label for="si-img-file" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 rounded-lg text-[11px] font-bold cursor-pointer relative">
+                <span>📸 Chụp / Đổi ảnh SP</span>
+                <input id="si-img-file" type="file" accept="image/*" capture="environment" onchange="handleProductPhotoCapture(this, 'si-img-preview')" style="position:absolute;opacity:0;width:1px;height:1px;left:0;top:0;" />
+              </label>
+            </div>
+          </div>
+          <button onclick="confirmStockIn('${p.id}')" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Xác nhận nhập kho & Cập nhật ảnh</button>
         </div>
       `);
     }
@@ -1801,14 +2349,21 @@
       const p = state.products.find(x => x.id === prodId);
       if (!p || qty <= 0) return;
       p.stock += qty;
+      state.stockLogs.unshift({ id: 'SL' + Date.now(), isoDate: getTodayStr(), time: new Date().toTimeString().slice(0, 5), type: 'import', prodName: `Nhập ${p.name}`, qty, totalCost: qty * (p.cost || 0) });
+      if (tempProductImage) {
+        p.image = tempProductImage;
+        state.cart.forEach(c => { if (c.id === p.id) c.image = tempProductImage; });
+      }
+      tempProductImage = '';
       closeModal();
       render();
       showToast(`Đã nhập +${qty} ${p.unit} ${p.name}`);
     }
 
-    function openAddProductModal() {
+    function openAddProductModal(prefillBarcode = '') {
+      tempProductImage = '';
       openModal(`
-        <div class="p-4 space-y-3">
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-sm">Thêm sản phẩm mới</h3>
             <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
@@ -1819,12 +2374,19 @@
               ${(state.categories || []).map(c => `<option value="${c}">${c}</option>`).join('')}
             </select>
             <div class="flex gap-1.5">
-              <input id="np-barcode" type="text" placeholder="Mã vạch EAN-13 (13 số)" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+              <input id="np-barcode" type="text" value="${prefillBarcode}" placeholder="Mã vạch EAN-13 (13 số)" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
               <button type="button" onclick="document.getElementById('np-barcode').value = generateValidEAN13();" class="px-2.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[11px] font-bold shrink-0">🎲 Tạo mã</button>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <input id="np-price" type="number" placeholder="Giá bán (đ)" class="px-3 py-2 border border-slate-200 rounded-xl text-xs" />
               <input id="np-stock" type="number" placeholder="Tồn đầu" value="20" class="px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2">
+              <img id="np-img-preview" src="" alt="" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0 hidden" />
+              <label for="np-img-file" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 rounded-lg text-[11px] font-bold cursor-pointer relative">
+                <span>📸 Chụp / Chọn ảnh thực tế</span>
+                <input id="np-img-file" type="file" accept="image/*" capture="environment" onchange="handleProductPhotoCapture(this, 'np-img-preview')" style="position:absolute;opacity:0;width:1px;height:1px;left:0;top:0;" />
+              </label>
             </div>
           </div>
           <button onclick="confirmAddProduct()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu sản phẩm</button>
@@ -1839,7 +2401,10 @@
       const stock = Number(document.getElementById('np-stock').value || 0);
       const barcode = document.getElementById('np-barcode').value.trim() || ('893' + Math.floor(1000000000 + Math.random() * 8999999999));
       if (!name || price <= 0) { showToast('Nhập tên và giá bán hợp lệ', 'warn'); return; }
-      state.products.unshift({ id: 'P' + Date.now(), barcode, name, category: cat, price, cost: Math.round(price * 0.8), stock, unit: 'Cái', emoji: '📦' });
+      const initCost = Math.round(price * 0.8);
+      state.products.unshift({ id: 'P' + Date.now(), barcode, name, category: cat, price, cost: initCost, stock, unit: 'Cái', emoji: '📦', image: tempProductImage || '' });
+      if (stock > 0) state.stockLogs.unshift({ id: 'SL' + Date.now(), isoDate: getTodayStr(), time: new Date().toTimeString().slice(0, 5), type: 'import', prodName: `Nhập mới ${name}`, qty: stock, totalCost: stock * initCost });
+      tempProductImage = '';
       closeModal();
       render();
       showToast(`Đã thêm ${name}`);
@@ -1858,8 +2423,8 @@
           <div class="bg-slate-900 text-white p-4 rounded-2xl shadow-md space-y-2.5">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-[11px] text-slate-400">Báo cáo Ca hiện tại (${state.shift.id})</div>
-                <div class="text-sm font-bold">Thu ngân: ${state.shift.cashier} • Từ ${state.shift.startTime}</div>
+                <div class="text-[11px] text-slate-400">Báo cáo Ca (${state.shift.id}) • ${state.shift.mode === 'auto' ? 'Tự động' : 'Thủ công'}</div>
+                <div class="text-sm font-bold">Thu ngân: ${state.shift.cashier} • ${state.shift.startTime} - ${state.shift.endTime || '22:00'}</div>
               </div>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${state.shift.closed ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500 text-white'}">${state.shift.closed ? 'Đã chốt ca' : 'Đang mở ca'}</span>
             </div>
@@ -1880,17 +2445,39 @@
             </div>
           </div>
 
+          <!-- Search & Filter Sales History -->
+          <div class="bg-white p-2.5 rounded-2xl border border-slate-200 space-y-2">
+            <input id="order-search-input" type="text" value="${state.orderSearch || ''}" placeholder="Tìm mã HĐ, tên khách, thu ngân..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+              ${['Tất cả', 'Tiền mặt', 'VietQR', 'Thẻ / Ví'].map(m => `
+                <button onclick="state.orderMethodFilter='${m}'; render();" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap ${state.orderMethodFilter === m ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}">${m}</button>
+              `).join('')}
+            </div>
+          </div>
+
           <!-- Order List -->
-          <div class="text-xs font-bold text-slate-700">Lịch sử hóa đơn (${state.orders.length})</div>
-          <div class="space-y-2">
-            ${state.orders.map((o, idx) => `
+          ${(() => {
+            const q = (state.orderSearch || '').toLowerCase().trim();
+            const list = state.orders.map((o, idx) => ({ o, idx })).filter(({ o }) => {
+              const matchM = state.orderMethodFilter === 'Tất cả' || o.method === state.orderMethodFilter;
+              const matchQ = !q || o.id.toLowerCase().includes(q) || (o.customerName || '').toLowerCase().includes(q) || (o.cashier || '').toLowerCase().includes(q);
+              return matchM && matchQ;
+            });
+            const sumFiltered = list.filter(x => x.o.status === 'Hoàn thành').reduce((s, x) => s + x.o.total, 0);
+            return `
+              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>Lịch sử bán hàng (${list.length} đơn)</span>
+                <span class="text-emerald-700">${fmt(sumFiltered)}</span>
+              </div>
+              <div class="space-y-2">
+                ${list.length === 0 ? '<p class="text-center text-xs text-slate-400 py-6 bg-white rounded-2xl border border-dashed border-slate-200">Không có hóa đơn phù hợp</p>' : list.map(({ o, idx }) => `
               <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-900">${o.id} <span class="text-[10px] font-normal text-slate-500">• ${o.time}</span></span>
                   <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${o.status === 'Hoàn thành' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${o.status}</span>
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-slate-600">${o.customerName} • ${o.method}${o.promoCode ? ` • <b class="text-emerald-700">${o.promoCode}</b>` : ''}</span>
+                  <span class="text-slate-600">${o.customerName} • ${o.method}${o.promoCode ? ` • <b class="text-emerald-700">${o.promoCode}</b>` : ''}${o.raffleCode ? ` • <b class="text-amber-600">🎟️${o.raffleCode}</b>` : ''}</span>
                   <span class="font-extrabold text-slate-900">${fmt(o.total)}</span>
                 </div>
                 <div class="flex gap-2 pt-1">
@@ -1899,9 +2486,20 @@
                 </div>
               </div>
             `).join('')}
-          </div>
+              </div>
+            `;
+          })()}
         </div>
       `;
+      const osi = document.getElementById('order-search-input');
+      if (osi) {
+        osi.addEventListener('input', (e) => {
+          state.orderSearch = e.target.value;
+          render();
+          const el = document.getElementById('order-search-input');
+          if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        });
+      }
     }
 
     function openReceiptByIndex(idx) {
@@ -1936,24 +2534,62 @@
 
     // ---------- TAB 5: REMOTE OWNER DASHBOARD ----------
     function renderOwner(container) {
-      const branchOrders = state.orders.filter(o => o.status === 'Hoàn thành' && (state.ownerBranch === 'Tất cả chi nhánh' || o.branch === state.ownerBranch));
-      const revenue = branchOrders.reduce((s, o) => s + o.total, 0);
-      const costTotal = branchOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + (i.cost || i.price * 0.8) * i.qty, 0), 0);
-      const profit = Math.max(0, revenue - costTotal);
-      const avgBasket = branchOrders.length > 0 ? Math.round(revenue / branchOrders.length) : 0;
+      const openDate = (state.storeInfo && state.storeInfo.openingDate) || '2026-11-01';
+      const openDateDisp = openDate.split('-').reverse().join('/');
+
+      // Since-opening totals (all completed orders for selected branch)
+      const allBranchOrders = state.orders.filter(o => o.status === 'Hoàn thành' && (state.ownerBranch === 'Tất cả chi nhánh' || o.branch === state.ownerBranch));
+      const sinceRevenue = allBranchOrders.reduce((s, o) => s + o.total, 0);
+      const sinceSoldCost = allBranchOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + (i.cost || i.price * 0.8) * i.qty, 0), 0);
+      const sinceProfit = sinceRevenue - sinceSoldCost;
+      const inventoryCapital = state.products.reduce((s, p) => s + (p.stock * (p.cost || 0)), 0);
+      const totalCapitalSinceOpen = inventoryCapital + sinceSoldCost;
+
+      // Date-filtered orders & stock logs
+      const sDate = state.ownerStartDate || openDate;
+      const eDate = state.ownerEndDate || getTodayStr();
+      const filteredOrders = allBranchOrders.filter(o => {
+        const d = o.isoDate || getTodayStr();
+        return (!sDate || d >= sDate) && (!eDate || d <= eDate);
+      });
+      const periodRevenue = filteredOrders.reduce((s, o) => s + o.total, 0);
+      const periodCost = filteredOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + (i.cost || i.price * 0.8) * i.qty, 0), 0);
+      const periodProfit = periodRevenue - periodCost;
+      const avgBasket = filteredOrders.length > 0 ? Math.round(periodRevenue / filteredOrders.length) : 0;
+
+      const filteredLogs = (state.stockLogs || []).filter(l => (!sDate || l.isoDate >= sDate) && (!eDate || l.isoDate <= eDate));
+      const importVal = filteredLogs.filter(l => l.type === 'import').reduce((s, l) => s + (l.totalCost || 0), 0);
+      const importQty = filteredLogs.filter(l => l.type === 'import').reduce((s, l) => s + (l.qty || 0), 0);
+      const exportVal = filteredLogs.filter(l => l.type === 'export').reduce((s, l) => s + (l.totalCost || 0), 0);
+      const exportQty = filteredLogs.filter(l => l.type === 'export').reduce((s, l) => s + (l.qty || 0), 0);
+
       const lowStockItems = state.products.filter(p => p.stock <= 10);
 
       container.innerHTML = `
         <div class="p-3 space-y-3">
-          <!-- Remote Filter Bar -->
+          <!-- Remote Filter Bar & Date Range -->
           <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
             <div class="flex items-center justify-between gap-2">
               <select id="owner-branch-select" class="flex-1 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2">
-                <option ${state.ownerBranch === 'Tất cả chi nhánh' ? 'selected' : ''}>Tất cả chi nhánh</option>
-                <option ${state.ownerBranch === 'CN1 - Trảng Bàng' ? 'selected' : ''}>CN1 - Trảng Bàng</option>
-                <option ${state.ownerBranch === 'CN2 - Gò Dầu' ? 'selected' : ''}>CN2 - Gò Dầu</option>
+                <option value="Tất cả chi nhánh" ${state.ownerBranch === 'Tất cả chi nhánh' ? 'selected' : ''}>Tất cả chi nhánh</option>
+                ${(state.branches || []).map(b => `<option value="${b}" ${state.ownerBranch === b ? 'selected' : ''}>${b}</option>`).join('')}
               </select>
               <button onclick="cloudConfig.enabled ? pullFromCloud(false) : openCloudSyncModal();" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shrink-0 active:scale-95">↻ Đồng bộ</button>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <label class="text-[10px] text-slate-500 block">Từ ngày:</label>
+                <input id="ow-sdate" type="date" value="${sDate}" onchange="state.ownerStartDate=this.value; render();" class="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold" />
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500 block">Đến ngày:</label>
+                <input id="ow-edate" type="date" value="${eDate}" onchange="state.ownerEndDate=this.value; render();" class="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold" />
+              </div>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="state.ownerStartDate=getTodayStr(); state.ownerEndDate=getTodayStr(); render();" class="flex-1 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-700">Hôm nay</button>
+              <button onclick="const t=getTodayStr(); state.ownerStartDate=t.slice(0,8)+'01'; state.ownerEndDate=t; render();" class="flex-1 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-700">Tháng này</button>
+              <button onclick="state.ownerStartDate='${openDate}'; state.ownerEndDate=getTodayStr(); render();" class="flex-1 py-1 bg-emerald-50 rounded-lg text-[10px] font-bold text-emerald-700">Từ khai trương</button>
             </div>
             <button onclick="openCloudSyncModal()" class="w-full flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl ${cloudConfig.enabled && getCloudEndpoint() ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}">
               <span>${cloudConfig.enabled && getCloudEndpoint() ? `☁️ Đang đồng bộ mã: <b>${cloudConfig.storeId}</b> (${cloudConfig.lastSync || 'vừa xong'})` : '⚠️ Chưa bật Đồng bộ Đám mây — Chạm để kết nối máy nhân viên'}</span>
@@ -1961,32 +2597,50 @@
             </button>
           </div>
 
-          <!-- KPI 2x2 -->
-          <div class="grid grid-cols-2 gap-2.5">
-            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3 rounded-2xl shadow-sm">
-              <div class="text-[11px] text-emerald-100">Doanh thu thuần</div>
-              <div class="text-lg font-extrabold mt-0.5">${fmt(revenue)}</div>
-              <div class="text-[10px] text-emerald-200 mt-1">Cập nhật theo thời gian thực</div>
+          <!-- Since Opening Day Capital & Profit Card -->
+          <div class="bg-slate-900 text-white p-3.5 rounded-2xl shadow-md space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400">📊 Tài chính từ ngày khai trương</span>
+              <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300">Khai trương: ${openDateDisp}</span>
             </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-              <div class="text-[11px] text-slate-500">Lợi nhuận gộp (ước tính)</div>
-              <div class="text-lg font-extrabold text-emerald-700 mt-0.5">${fmt(profit)}</div>
-              <div class="text-[10px] text-slate-400 mt-1">Biên LN: ${revenue > 0 ? Math.round((profit / revenue) * 100) : 0}%</div>
-            </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-              <div class="text-[11px] text-slate-500">Số đơn hàng</div>
-              <div class="text-base font-extrabold text-slate-900">${branchOrders.length} đơn</div>
-            </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-              <div class="text-[11px] text-slate-500">Giá trị TB / đơn</div>
-              <div class="text-base font-extrabold text-slate-900">${fmt(avgBasket)}</div>
+            <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-800">
+              <div>
+                <div class="text-[10px] text-slate-400">Tổng vốn từ khai trương</div>
+                <div class="text-sm font-extrabold text-white">${fmt(totalCapitalSinceOpen)}</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">Lợi nhuận từ khai trương</div>
+                <div class="text-sm font-extrabold text-emerald-400">${fmt(sinceProfit)}</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">Tổng vốn tồn kho</div>
+                <div class="text-xs font-bold text-amber-400">${fmt(inventoryCapital)}</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">Tổng vốn đã bán ra</div>
+                <div class="text-xs font-bold text-slate-200">${fmt(sinceSoldCost)}</div>
+              </div>
             </div>
           </div>
 
-          <!-- Owner Quick Management: Categories, Price List, Promos -->
+          <!-- Period KPI 2x2 -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3 rounded-2xl shadow-sm">
+              <div class="text-[11px] text-emerald-100">Doanh thu (theo bộ lọc)</div>
+              <div class="text-lg font-extrabold mt-0.5">${fmt(periodRevenue)}</div>
+              <div class="text-[10px] text-emerald-200 mt-1">${filteredOrders.length} đơn hàng</div>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-[11px] text-slate-500">Lợi nhuận gộp (kỳ lọc)</div>
+              <div class="text-lg font-extrabold text-emerald-700 mt-0.5">${fmt(periodProfit)}</div>
+              <div class="text-[10px] text-slate-400 mt-1">TB/đơn: ${fmt(avgBasket)}</div>
+            </div>
+          </div>
+
+          <!-- Owner Quick Management: Categories, Price List, Promos, Staff -->
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
             <h3 class="text-xs font-bold text-slate-800">Thiết lập Cửa hàng (Chủ shop)</h3>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-2">
               <button onclick="openCategoryManagerModal()" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-center active:scale-95 transition">
                 <div class="text-base">🗂️</div>
                 <div class="text-[11px] font-bold mt-0.5">Danh mục</div>
@@ -2002,17 +2656,54 @@
                 <div class="text-[11px] font-bold mt-0.5">Khuyến mãi</div>
                 <div class="text-[10px] opacity-80">${state.promos.filter(p=>p.active).length} đang bật</div>
               </button>
+              <button onclick="openStaffManagerModal()" class="p-2.5 rounded-xl bg-slate-100 border border-slate-300 text-slate-800 text-center active:scale-95 transition">
+                <div class="text-base">👥</div>
+                <div class="text-[11px] font-bold mt-0.5">Nhân viên</div>
+                <div class="text-[10px] opacity-80">${state.staffList.length} người • Ca: ${state.shift.cashier}</div>
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openBranchManagerModal()" class="py-2 bg-slate-900 text-white rounded-xl text-[11px] font-bold active:scale-95 transition">
+                🏢 Chi nhánh (${state.branches.length})
+              </button>
+              <button onclick="openWeeklyScheduleModal()" class="py-2 bg-blue-600 text-white rounded-xl text-[11px] font-bold active:scale-95 transition">
+                📅 Lịch trực tuần
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openStoreInfoModal()" class="py-2 bg-emerald-600 text-white rounded-xl text-[11px] font-bold active:scale-95 transition">
+                📍 Địa chỉ & SĐT HĐ
+              </button>
+              <button onclick="openNewStoreSetupModal()" class="py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-[11px] font-bold active:scale-95 transition">
+                🏪 Làm mới từ 0đ
+              </button>
             </div>
           </div>
 
-          <!-- Revenue Chart -->
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-xs font-bold text-slate-800">Biểu đồ doanh thu theo khung giờ</h3>
-              <span class="text-[10px] text-emerald-600 font-semibold">Hôm nay</span>
+          <!-- Visual Analytics Charts (Hourly / Daily / Monthly / Stock In-Out) -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-slate-800">Biểu đồ Trực quan</h3>
+              <span class="text-[10px] text-emerald-600 font-semibold">${sDate.slice(5)} → ${eDate.slice(5)}</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl">
+              <button onclick="state.ownerChartMode='daily'; render();" class="py-1.5 rounded-lg text-[10px] font-bold ${state.ownerChartMode === 'daily' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Hàng ngày</button>
+              <button onclick="state.ownerChartMode='monthly'; render();" class="py-1.5 rounded-lg text-[10px] font-bold ${state.ownerChartMode === 'monthly' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Hàng tháng</button>
+              <button onclick="state.ownerChartMode='hourly'; render();" class="py-1.5 rounded-lg text-[10px] font-bold ${state.ownerChartMode === 'hourly' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Theo giờ</button>
+              <button onclick="state.ownerChartMode='stock'; render();" class="py-1.5 rounded-lg text-[10px] font-bold ${state.ownerChartMode === 'stock' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Nhập/Xuất</button>
             </div>
             <div class="relative h-48">
               <canvas id="owner-revenue-chart"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+              <div class="bg-blue-50 p-2 rounded-xl">
+                <div class="text-[10px] text-blue-700 font-semibold">Nhập kho trong kỳ (${importQty} SP)</div>
+                <div class="font-extrabold text-blue-900">${fmt(importVal)}</div>
+              </div>
+              <div class="bg-amber-50 p-2 rounded-xl">
+                <div class="text-[10px] text-amber-700 font-semibold">Xuất kho trong kỳ (${exportQty} SP)</div>
+                <div class="font-extrabold text-amber-900">${fmt(exportVal)}</div>
+              </div>
             </div>
           </div>
 
@@ -2058,46 +2749,71 @@
         render();
       });
 
+      // Build Chart Data based on ownerChartMode
+      let labels = [];
+      let datasets = [];
+      if (state.ownerChartMode === 'hourly') {
+        labels = ['08h', '09h', '10h', '11h', '12h', '13h', '14h', '16h', '18h', '20h'];
+        const vals = labels.map(h => filteredOrders.filter(o => o.time.startsWith(h.slice(0, 2))).reduce((s, o) => s + o.total, 0));
+        datasets = [{ label: 'Doanh thu (đ)', data: vals, backgroundColor: '#10b981', borderRadius: 6 }];
+      } else if (state.ownerChartMode === 'daily') {
+        const dayMap = {};
+        filteredOrders.forEach(o => {
+          const d = o.isoDate || getTodayStr();
+          dayMap[d] = (dayMap[d] || 0) + o.total;
+        });
+        const sortedDays = Object.keys(dayMap).sort();
+        labels = sortedDays.length ? sortedDays.map(d => d.slice(8) + '/' + d.slice(5, 7)) : [getTodayStr().slice(8) + '/' + getTodayStr().slice(5, 7)];
+        const vals = sortedDays.length ? sortedDays.map(d => dayMap[d]) : [0];
+        datasets = [{ label: 'Doanh thu ngày (đ)', data: vals, backgroundColor: '#059669', borderRadius: 6 }];
+      } else if (state.ownerChartMode === 'monthly') {
+        const mMap = {};
+        allBranchOrders.forEach(o => {
+          const m = (o.isoDate || getTodayStr()).slice(0, 7);
+          mMap[m] = (mMap[m] || 0) + o.total;
+        });
+        const sortedM = Object.keys(mMap).sort();
+        labels = sortedM.length ? sortedM.map(m => 'T' + m.slice(5) + '/' + m.slice(2, 4)) : ['T11/26'];
+        const vals = sortedM.length ? sortedM.map(m => mMap[m]) : [0];
+        datasets = [{ label: 'Doanh thu tháng (đ)', data: vals, backgroundColor: '#0d9488', borderRadius: 6 }];
+      } else {
+        // Stock Import vs Export by day
+        const sMap = {};
+        filteredLogs.forEach(l => {
+          if (!sMap[l.isoDate]) sMap[l.isoDate] = { imp: 0, exp: 0 };
+          if (l.type === 'import') sMap[l.isoDate].imp += (l.totalCost || 0);
+          else sMap[l.isoDate].exp += (l.totalCost || 0);
+        });
+        const days = Object.keys(sMap).sort();
+        labels = days.length ? days.map(d => d.slice(8) + '/' + d.slice(5, 7)) : ['Hôm nay'];
+        datasets = [
+          { label: 'Nhập kho (đ)', data: days.length ? days.map(d => sMap[d].imp) : [0], backgroundColor: '#2563eb', borderRadius: 6 },
+          { label: 'Xuất kho (đ)', data: days.length ? days.map(d => sMap[d].exp) : [0], backgroundColor: '#f59e0b', borderRadius: 6 }
+        ];
+      }
+
       const ctx = document.getElementById('owner-revenue-chart').getContext('2d');
       if (ownerChartInstance) ownerChartInstance.destroy();
-      const hours = ['08h', '09h', '10h', '11h', '12h', '13h', '14h'];
-      const hourlyData = hours.map(h => {
-        const prefix = h.slice(0, 2);
-        return branchOrders.filter(o => o.time.startsWith(prefix)).reduce((s, o) => s + o.total, 0);
-      });
       if (typeof Chart === 'undefined') {
         const box = document.getElementById('owner-revenue-chart').parentElement;
-        const maxVal = Math.max(1, ...hourlyData);
+        const flat = datasets[0].data || [0];
+        const maxVal = Math.max(1, ...flat);
         box.innerHTML = `<div class="h-full flex items-end justify-between gap-2 pt-4 pb-1 px-1">` +
-          hours.map((h, i) => `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-            <div class="w-full bg-emerald-500 rounded-t" style="height:${Math.max(4, Math.round((hourlyData[i]/maxVal)*100))}%"></div>
-            <span class="text-[10px] text-slate-500">${h}</span>
+          labels.map((lb, i) => `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-emerald-500 rounded-t" style="height:${Math.max(4, Math.round((flat[i]/maxVal)*100))}%"></div>
+            <span class="text-[10px] text-slate-500 truncate">${lb}</span>
           </div>`).join('') + `</div>`;
         return;
       }
       ownerChartInstance = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels: hours,
-          datasets: [{
-            label: 'Doanh thu (đ)',
-            data: hourlyData,
-            backgroundColor: '#10b981',
-            borderRadius: 6
-          }]
-        },
+        data: { labels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { legend: { display: datasets.length > 1, labels: { font: { size: 10 } } } },
           scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                font: { size: 10 },
-                callback: (v) => (v >= 1000 ? (v / 1000) + 'k' : v)
-              }
-            },
+            y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => (v >= 1000000 ? (v / 1000000).toFixed(1) + 'tr' : v >= 1000 ? (v / 1000) + 'k' : v) } },
             x: { ticks: { font: { size: 10 } } }
           }
         }
@@ -2150,12 +2866,13 @@
       if (state.categories.length <= 1) { showToast('Cần giữ lại ít nhất 1 danh mục', 'warn'); return; }
       const removed = state.categories[idx];
       state.categories.splice(idx, 1);
-      const fallback = state.categories[0];
-      state.products.forEach(p => { if (p.category === removed) p.category = fallback; });
+      const removedIds = new Set(state.products.filter(p => p.category === removed).map(p => p.id));
+      state.products = state.products.filter(p => p.category !== removed);
+      state.cart = state.cart.filter(c => !removedIds.has(c.id));
       if (state.posCategory === removed) state.posCategory = 'Tất cả';
       render();
       openCategoryManagerModal();
-      showToast(`Đã xóa danh mục "${removed}"`);
+      showToast(`Đã xóa danh mục "${removed}" và ${removedIds.size} sản phẩm thuộc nhóm này!`);
     }
 
     function openPriceManagerModal() {
@@ -2174,7 +2891,10 @@
               <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
                 <div class="flex items-center justify-between gap-2">
                   <span class="text-xs font-bold text-slate-800 truncate">${p.emoji} ${p.name}</span>
-                  <span class="text-[10px] text-slate-500 shrink-0">${p.category}</span>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-[10px] text-slate-500">${p.category}</span>
+                    <button type="button" onclick="deleteProductById('${p.id}')" class="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded text-[10px] font-semibold">Xóa SP</button>
+                  </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
@@ -2192,6 +2912,16 @@
           <button onclick="saveAllPrices()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu toàn bộ Bảng giá mới</button>
         </div>
       `);
+    }
+
+    function deleteProductById(prodId) {
+      const p = state.products.find(x => x.id === prodId);
+      if (!p) return;
+      state.products = state.products.filter(x => x.id !== prodId);
+      state.cart = state.cart.filter(c => c.id !== prodId);
+      render();
+      openPriceManagerModal();
+      showToast(`Đã xóa sản phẩm "${p.name}" khỏi cửa hàng`);
     }
 
     function saveAllPrices() {
@@ -2300,18 +3030,120 @@
             </div>
             <input id="pr-name" type="text" value="${editing ? editing.name : ''}" placeholder="Tên chương trình (VD: Sale Cuối Tuần)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
             <div class="grid grid-cols-2 gap-2">
-              <input id="pr-code" type="text" value="${editing ? editing.code : ''}" placeholder="Mã KM (VD: SALE15)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs uppercase font-bold" />
+              <input id="pr-code" type="text" value="${editing ? editing.code : generateAutoPromoCode(getTodayStr(), (state.promoSeq || 0) + 1)}" placeholder="Mã tự động (VD: MN011126)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs uppercase font-bold bg-slate-100" />
               <select id="pr-type" onchange="onPromoTypeChange()" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs">
                 <option value="percent" ${editing && editing.type === 'percent' ? 'selected' : ''}>Giảm theo %</option>
                 <option value="fixed" ${editing && editing.type === 'fixed' ? 'selected' : ''}>Giảm tiền (đ)</option>
                 <option value="gift_points" ${editing && editing.type === 'gift_points' ? 'selected' : ''}>Tặng thêm điểm</option>
                 <option value="custom" ${editing && editing.type === 'custom' ? 'selected' : ''}>Tự tạo ưu đãi tự do</option>
+                <option value="member_tier" ${editing && editing.type === 'member_tier' ? 'selected' : ''}>Ưu đãi thành viên (Theo hạng & điểm)</option>
+                <option value="product_promo" ${editing && editing.type === 'product_promo' ? 'selected' : ''}>Ưu đãi theo sản phẩm cụ thể</option>
               </select>
             </div>
-            <input id="pr-custom-rule" type="text" value="${editing && editing.customRule ? editing.customRule : ''}" placeholder="Nội dung tự tạo (VD: Mua 2 tặng 1, Đồng giá 19k...)" class="w-full px-2.5 py-1.5 border border-emerald-300 bg-emerald-50 rounded-lg text-xs ${editing && editing.type === 'custom' ? '' : 'hidden'}" />
-            <div class="grid grid-cols-2 gap-2">
-              <input id="pr-val" type="number" value="${editing ? editing.value : ''}" placeholder="${editing && editing.type === 'custom' ? 'Giảm thêm đ (hoặc 0)' : 'Mức giảm (% / đ / điểm)'}" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
-              <input id="pr-min" type="number" value="${editing ? editing.minOrder : 0}" placeholder="Đơn tối thiểu (đ)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+                                    <div id="pr-product-box" class="space-y-2 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 ${editing && editing.type === 'product_promo' ? '' : 'hidden'}">
+              <div>
+                <label class="text-[10px] font-bold text-emerald-900 block mb-0.5">Chọn sản phẩm áp dụng:</label>
+                <select id="pr-target-prod" class="w-full px-2 py-1.5 border border-emerald-300 bg-white rounded-lg text-xs font-semibold">
+                  ${(state.products || []).map(p => `<option value="${p.id}" ${editing && editing.targetProdId === p.id ? 'selected' : ''}>${p.emoji} ${p.name} (${fmt(p.price)})</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-emerald-900 block mb-0.5">Hình thức ưu đãi cho sản phẩm:</label>
+                <select id="pr-prod-dtype" class="w-full px-2 py-1.5 border border-emerald-300 bg-white rounded-lg text-xs font-semibold">
+                  <option value="percent" ${!editing || editing.prodDiscType === 'percent' ? 'selected' : ''}>Giảm theo %</option>
+                  <option value="fixed" ${editing && editing.prodDiscType === 'fixed' ? 'selected' : ''}>Giảm tiền mỗi SP (đ)</option>
+                  <option value="flat_price" ${editing && editing.prodDiscType === 'flat_price' ? 'selected' : ''}>Đồng giá bán mới (đ)</option>
+                </select>
+              </div>
+            </div>
+            <div id="pr-member-box" class="space-y-2 bg-amber-50 p-2.5 rounded-xl border border-amber-200 ${editing && editing.type === 'member_tier' ? '' : 'hidden'}">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] font-bold text-amber-900 block mb-0.5">Hạng áp dụng:</label>
+                  <select id="pr-mem-tier" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs font-semibold">
+                    ${['Tất cả', 'Kim Cương', 'Vàng', 'Bạc', 'Thành viên'].map(t => `<option value="${t}" ${editing && editing.memberTier === t ? 'selected' : ''}>${t}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-amber-900 block mb-0.5">Xét điểm tích lũy:</label>
+                  <select id="pr-mem-mode" onchange="onMemberModeChange()" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs font-semibold">
+                    <option value="min_pts" ${!editing || editing.memberMode !== 'top_race' ? 'selected' : ''}>Điểm tích lũy từ</option>
+                    <option value="top_race" ${editing && editing.memberMode === 'top_race' ? 'selected' : ''}>🏆 Đua top (Cao → Thấp)</option>
+                  </select>
+                </div>
+              </div>
+              <div id="pr-mem-pts-wrap" class="${editing && editing.memberMode === 'top_race' ? 'hidden' : ''}">
+                <label class="text-[10px] font-bold text-amber-900 block mb-0.5">Mốc điểm tối thiểu:</label>
+                <input id="pr-mem-pts" type="number" min="0" value="${editing && editing.memberMinPts ? editing.memberMinPts : 0}" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs font-bold" />
+              </div>
+              <div id="pr-mem-top-wrap" class="${editing && editing.memberMode === 'top_race' ? '' : 'hidden'}">
+                <label class="text-[10px] font-bold text-amber-900 block mb-0.5">Trao thưởng cho Top mấy người cao điểm nhất?</label>
+                <input id="pr-mem-topn" type="number" min="1" value="${editing && editing.memberTopN ? editing.memberTopN : 3}" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs font-bold" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-amber-900 block mb-0.5">Hình thức ưu đãi thành viên:</label>
+                <select id="pr-mem-dtype" onchange="onMemberDiscTypeChange()" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs font-semibold">
+                  <option value="percent" ${!editing || editing.memberDiscType === 'percent' ? 'selected' : ''}>Giảm theo %</option>
+                  <option value="fixed" ${editing && editing.memberDiscType === 'fixed' ? 'selected' : ''}>Giảm tiền (đ)</option>
+                  <option value="voucher" ${editing && editing.memberDiscType === 'voucher' ? 'selected' : ''}>Tặng phiếu mua hàng (giá trị đ)</option>
+                  <option value="gift" ${editing && editing.memberDiscType === 'gift' ? 'selected' : ''}>Đổi quà (chọn quà tặng)</option>
+                  <option value="other" ${editing && editing.memberDiscType === 'other' ? 'selected' : ''}>Khác (tự đặt nội dung)</option>
+                </select>
+              </div>
+              <input id="pr-mem-gift" type="text" value="${editing && editing.memberGift ? editing.memberGift : ''}" placeholder="Tên quà tặng (VD: Bình giữ nhiệt / Nồi cơm...)" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs ${editing && editing.memberDiscType === 'gift' ? '' : 'hidden'}" />
+              <input id="pr-mem-other" type="text" value="${editing && editing.memberOther ? editing.memberOther : ''}" placeholder="Nội dung ưu đãi tự đặt (VD: Giao hàng miễn phí cả tháng)" class="w-full px-2 py-1.5 border border-amber-300 bg-white rounded-lg text-xs ${editing && editing.memberDiscType === 'other' ? '' : 'hidden'}" />
+            </div>
+            <div id="pr-custom-box" class="space-y-2 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 ${editing && editing.type === 'custom' ? '' : 'hidden'}">
+              <input id="pr-custom-rule" type="text" value="${editing && editing.customRule ? editing.customRule : ''}" placeholder="Nội dung tự tạo (VD: Mua Combo tặng quà, Đồng giá 19k...)" class="w-full px-2.5 py-1.5 border border-emerald-300 bg-white rounded-lg text-xs" />
+              <div>
+                <label class="text-[10px] font-bold text-emerald-900 block mb-0.5">Điều kiện áp dụng ưu đãi:</label>
+                <select id="pr-cond-mode" onchange="onPromoCondModeChange()" class="w-full px-2.5 py-1.5 border border-emerald-300 bg-white rounded-lg text-xs font-semibold">
+                  <option value="order_total" ${!editing || !editing.condMode || editing.condMode === 'order_total' ? 'selected' : ''}>Theo Tổng tiền / Hóa đơn</option>
+                  <option value="combo" ${editing && editing.condMode === 'combo' ? 'selected' : ''}>Theo Combo các sản phẩm tùy chọn</option>
+                  <option value="both" ${editing && editing.condMode === 'both' ? 'selected' : ''}>Cả Combo sản phẩm & Tổng tiền</option>
+                </select>
+              </div>
+              <div id="pr-combo-picker" class="bg-white p-2 rounded-lg border border-emerald-200 space-y-1 ${editing && (editing.condMode === 'combo' || editing.condMode === 'both') ? '' : 'hidden'}">
+                <div class="text-[10px] font-bold text-slate-700">Chọn các sản phẩm trong Combo:</div>
+                <div class="max-h-32 overflow-y-auto space-y-1">
+                  ${state.products.map(p => {
+                    const checked = editing && Array.isArray(editing.comboIds) && editing.comboIds.includes(p.id);
+                    return `
+                      <label class="flex items-center gap-2 text-[11px] text-slate-700 cursor-pointer">
+                        <input type="checkbox" class="pr-combo-chk w-3.5 h-3.5 accent-emerald-600" value="${p.id}" ${checked ? 'checked' : ''} />
+                        <span class="truncate">${p.emoji} ${p.name} (${fmt(p.price)})</span>
+                      </label>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+              <div class="bg-white p-2 rounded-lg border border-emerald-200 space-y-1.5">
+                <label class="flex items-center gap-2 text-[11px] font-bold text-emerald-900 cursor-pointer">
+                  <input id="pr-raffle-enable" type="checkbox" ${editing && editing.raffleEnabled ? 'checked' : ''} onchange="document.getElementById('pr-raffle-limit-wrap').classList.toggle('hidden', !this.checked)" class="w-3.5 h-3.5 accent-emerald-600" />
+                  <span>🎟️ In kèm Mã dự thưởng theo số thứ tự</span>
+                </label>
+                <div id="pr-raffle-limit-wrap" class="space-y-1.5 ${editing && editing.raffleEnabled ? '' : 'hidden'}">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] text-slate-600">Giới hạn số mã (VD: 200):</span>
+                    <input id="pr-raffle-limit" type="number" min="1" value="${editing && editing.raffleLimit ? editing.raffleLimit : 200}" class="w-24 px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-right" />
+                  </div>
+                  <label class="flex items-center gap-1.5 text-[10px] text-slate-700 font-semibold cursor-pointer">
+                    <input id="pr-raffle-multi" type="checkbox" ${!editing || editing.raffleMulti !== false ? 'checked' : ''} class="w-3.5 h-3.5 accent-emerald-600" />
+                    <span>Nhân số mã theo bội số hóa đơn (VD: 500k = 1 mã, 1tr = 2 mã, 1.5tr = 3 mã)</span>
+                  </label>
+                  <div>
+                    <label class="text-[10px] font-semibold text-slate-600 block mb-0.5">Thời gian quay số trúng thưởng (in lên hóa đơn):</label>
+                    <input id="pr-raffle-draw-time" type="text" value="${editing && editing.drawTime ? editing.drawTime : ''}" placeholder="VD: 20:00 ngày 30/11/2026" class="w-full px-2 py-1 border border-slate-200 rounded-lg text-xs" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="grid ${editing && editing.type === 'custom' ? 'grid-cols-1' : 'grid-cols-2'} gap-2" id="pr-val-min-grid">
+              <input id="pr-val" type="number" value="${editing ? editing.value : ''}" placeholder="Mức giảm (% / đ / điểm)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs ${editing && editing.type === 'custom' ? 'hidden' : ''}" />
+              <div>
+                <label id="pr-min-label" class="text-[10px] font-semibold text-slate-600 block mb-0.5">${editing && editing.type === 'custom' ? 'Số tiền cần đạt trên hóa đơn (đ):' : 'Đơn tối thiểu (đ):'}</label>
+                <input id="pr-min" type="number" value="${editing ? editing.minOrder : 0}" placeholder="Số tiền cần đạt (đ)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold" />
+              </div>
             </div>
             <div>
               <label class="text-[10px] font-semibold text-slate-600 block mb-0.5">Phạm vi áp dụng:</label>
@@ -2323,7 +3155,7 @@
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="text-[10px] font-semibold text-slate-600 block mb-0.5">Từ ngày:</label>
-                <input id="pr-start" type="date" value="${editing ? (editing.startDate || '') : getTodayStr()}" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs" />
+                <input id="pr-start" type="date" value="${editing ? (editing.startDate || '') : getTodayStr()}" onchange="if(!editingPromoId){ document.getElementById('pr-code').value = generateAutoPromoCode(this.value, (state.promoSeq || 0) + 1); }" class="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs" />
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-slate-600 block mb-0.5">Đến ngày:</label>
@@ -2352,11 +3184,34 @@
             <button onclick="saveOwnerPromo()" class="w-full py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">${editing ? 'Lưu thay đổi' : '+ Thêm chương trình KM'}</button>
           </div>
 
+                    <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200 space-y-1.5">
+            <div class="text-[11px] font-bold text-amber-900">🏆 Chủ shop cài đặt mốc điểm lên Hạng thành viên:</div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div>
+                <label class="text-[10px] text-slate-600 block">Bạc từ (đ)</label>
+                <input id="th-silver" type="number" value="${(state.tierThresholds && state.tierThresholds.silver) || 200}" class="w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-xs font-bold" />
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">Vàng từ (đ)</label>
+                <input id="th-gold" type="number" value="${(state.tierThresholds && state.tierThresholds.gold) || 500}" class="w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-xs font-bold" />
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">Kim Cương từ</label>
+                <input id="th-diamond" type="number" value="${(state.tierThresholds && state.tierThresholds.diamond) || 1200}" class="w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-xs font-bold" />
+              </div>
+            </div>
+            <button type="button" onclick="saveTierThresholds()" class="w-full py-1.5 bg-amber-500 text-white rounded-lg text-[11px] font-bold">Cập nhật Hạng mức Thành viên</button>
+          </div>
+
           <div class="space-y-2 max-h-60 overflow-y-auto">
             ${state.promos.map((pr, idx) => {
               const st = getPromoStatus(pr);
               const dateTxt = (pr.startDate || pr.endDate) ? `${pr.startDate || '...'} → ${pr.endDate || 'Không giới hạn'}` : 'Không giới hạn ngày';
-              const valTxt = pr.type === 'percent' ? pr.value + '%' : pr.type === 'gift_points' ? '+' + pr.value + ' điểm' : pr.type === 'custom' ? ((pr.customRule || 'Ưu đãi tự tạo') + (pr.value > 0 ? ' • -' + fmt(pr.value) : '')) : fmt(pr.value);
+              const memCondTxt = pr.memberMode === 'top_race' ? `Đua Top ${pr.memberTopN || 3}` : `≥${pr.memberMinPts || 0}đ`;
+              const memRewardTxt = pr.memberDiscType === 'fixed' ? fmt(pr.value) : pr.memberDiscType === 'voucher' ? `Phiếu mua hàng ${fmt(pr.value)}` : pr.memberDiscType === 'gift' ? `Quà: ${pr.memberGift || 'Quà tặng'}` : pr.memberDiscType === 'other' ? (pr.memberOther || 'Ưu đãi khác') : pr.value + '%';
+              const prodObj = pr.type === 'product_promo' ? state.products.find(x => x.id === pr.targetProdId) : null;
+              const prodTxt = prodObj ? `${prodObj.name} (${pr.prodDiscType === 'flat_price' ? 'Đồng giá ' + fmt(pr.value) : pr.prodDiscType === 'fixed' ? 'Giảm ' + fmt(pr.value) + '/SP' : 'Giảm ' + pr.value + '%'})` : fmt(pr.value);
+              const valTxt = pr.type === 'percent' ? pr.value + '%' : pr.type === 'gift_points' ? '+' + pr.value + ' điểm' : pr.type === 'custom' ? (pr.customRule || 'Ưu đãi tự tạo') : pr.type === 'member_tier' ? (`Hạng ${pr.memberTier || 'Tất cả'} (${memCondTxt}): ${memRewardTxt}`) : pr.type === 'product_promo' ? prodTxt : fmt(pr.value);
               return `
                 <div class="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1.5">
                   <div class="flex items-center justify-between gap-2">
@@ -2366,13 +3221,16 @@
                       <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${st.cls}">${st.label}</span>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
+                      ${pr.type === 'member_tier' && pr.memberMode === 'top_race' ? `<button onclick="openTopRaceModal('${pr.id}')" class="px-2 py-1 bg-amber-100 text-amber-800 rounded-lg text-[10px] font-bold">🏆 BXH</button>` : ''}
                       <button onclick="editingPromoId='${pr.id}'; openPromoManagerModal();" class="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-semibold">Sửa</button>
                       <button onclick="toggleOwnerPromo(${idx})" class="px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-semibold">${pr.active ? 'Tắt' : 'Bật'}</button>
                       <button onclick="deleteOwnerPromo(${idx})" class="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg text-[10px] font-semibold">Xóa</button>
                     </div>
                   </div>
                   <div class="text-[11px] text-slate-700 font-medium">${pr.name} • <b>${valTxt}</b> (${pr.scope && pr.scope !== 'all' ? pr.scope : 'Toàn shop'})</div>
-                  <div class="text-[10px] text-slate-500">⏰ ${dateTxt}${pr.minOrder > 0 ? ` • Đơn từ ${fmt(pr.minOrder)}` : ''}</div>
+                  ${(pr.condMode === 'combo' || pr.condMode === 'both') && Array.isArray(pr.comboIds) && pr.comboIds.length ? `<div class="text-[10px] text-emerald-700 font-semibold">🧺 Combo: ${pr.comboIds.map(id => { const p = state.products.find(x => x.id === id); return p ? p.name : id; }).join(' + ')}</div>` : ''}
+                  ${pr.raffleEnabled ? `<div class="text-[10px] text-amber-700 font-semibold">🎟️ Mã dự thưởng: Đã cấp ${pr.raffleIssued || 0}/${pr.raffleLimit || 200} (00001 - ${String(pr.raffleLimit || 200).padStart(5, '0')})${pr.drawTime ? ` • Quay số: ${pr.drawTime}` : ''}</div>` : ''}
+                  <div class="text-[10px] text-slate-500">⏰ ${dateTxt}${pr.minOrder > 0 ? ` • Tổng HĐ từ ${fmt(pr.minOrder)}` : ''}</div>
                 </div>
               `;
             }).join('')}
@@ -2381,12 +3239,66 @@
       `);
     }
 
+    function saveTierThresholds() {
+      const silver = Math.max(1, Number(document.getElementById('th-silver')?.value || 200));
+      const gold = Math.max(silver + 1, Number(document.getElementById('th-gold')?.value || 500));
+      const diamond = Math.max(gold + 1, Number(document.getElementById('th-diamond')?.value || 1200));
+      state.tierThresholds = { silver, gold, diamond };
+      recalcAllCustomerTiers();
+      render();
+      openPromoManagerModal();
+      showToast(`Đã cập nhật mốc hạng: Bạc ${silver}đ • Vàng ${gold}đ • Kim Cương ${diamond}đ`);
+    }
+
     function onPromoTypeChange() {
       const t = document.getElementById('pr-type')?.value;
-      const ruleEl = document.getElementById('pr-custom-rule');
+      const boxEl = document.getElementById('pr-custom-box');
+      const memEl = document.getElementById('pr-member-box');
+      const prodEl = document.getElementById('pr-product-box');
+      if (prodEl) prodEl.classList.toggle('hidden', t !== 'product_promo');
       const valEl = document.getElementById('pr-val');
-      if (ruleEl) ruleEl.classList.toggle('hidden', t !== 'custom');
-      if (valEl) valEl.placeholder = t === 'custom' ? 'Giảm thêm đ (hoặc 0)' : 'Mức giảm (% / đ / điểm)';
+      const gridEl = document.getElementById('pr-val-min-grid');
+      const minLbl = document.getElementById('pr-min-label');
+      if (boxEl) boxEl.classList.toggle('hidden', t !== 'custom');
+      if (memEl) memEl.classList.toggle('hidden', t !== 'member_tier');
+      if (valEl) valEl.classList.toggle('hidden', t === 'custom');
+      if (t === 'member_tier') onMemberDiscTypeChange();
+      if (gridEl) {
+        gridEl.classList.toggle('grid-cols-1', t === 'custom');
+        gridEl.classList.toggle('grid-cols-2', t !== 'custom');
+      }
+      if (minLbl) minLbl.textContent = t === 'custom' ? 'Số tiền cần đạt trên hóa đơn (đ):' : 'Đơn tối thiểu (đ):';
+    }
+
+    function onMemberModeChange() {
+      const m = document.getElementById('pr-mem-mode')?.value;
+      const ptsW = document.getElementById('pr-mem-pts-wrap');
+      const topW = document.getElementById('pr-mem-top-wrap');
+      if (ptsW) ptsW.classList.toggle('hidden', m === 'top_race');
+      if (topW) topW.classList.toggle('hidden', m !== 'top_race');
+    }
+
+    function onMemberDiscTypeChange() {
+      const t = document.getElementById('pr-type')?.value;
+      const dt = document.getElementById('pr-mem-dtype')?.value;
+      const giftEl = document.getElementById('pr-mem-gift');
+      const otherEl = document.getElementById('pr-mem-other');
+      const valEl = document.getElementById('pr-val');
+      if (giftEl) giftEl.classList.toggle('hidden', dt !== 'gift');
+      if (otherEl) otherEl.classList.toggle('hidden', dt !== 'other');
+      if (valEl && t === 'member_tier') {
+        const hideVal = (dt === 'gift' || dt === 'other');
+        valEl.classList.toggle('hidden', hideVal);
+        if (dt === 'voucher') valEl.placeholder = 'Giá trị phiếu mua hàng (đ)';
+        else if (dt === 'fixed') valEl.placeholder = 'Số tiền giảm (đ)';
+        else valEl.placeholder = 'Mức giảm (%)';
+      }
+    }
+
+    function onPromoCondModeChange() {
+      const m = document.getElementById('pr-cond-mode')?.value;
+      const picker = document.getElementById('pr-combo-picker');
+      if (picker) picker.classList.toggle('hidden', m !== 'combo' && m !== 'both');
     }
 
     function saveOwnerPromo() {
@@ -2394,14 +3306,41 @@
       let code = (document.getElementById('pr-code')?.value || '').trim().toUpperCase();
       const type = document.getElementById('pr-type')?.value || 'percent';
       const customRule = (document.getElementById('pr-custom-rule')?.value || '').trim();
-      const value = Number(document.getElementById('pr-val')?.value || 0);
-      const minOrder = Number(document.getElementById('pr-min')?.value || 0);
+      const condMode = type === 'custom' ? (document.getElementById('pr-cond-mode')?.value || 'order_total') : 'order_total';
+      const comboIds = type === 'custom' && (condMode === 'combo' || condMode === 'both')
+        ? Array.from(document.querySelectorAll('.pr-combo-chk:checked')).map(el => el.value)
+        : [];
+      const raffleEnabled = type === 'custom' && Boolean(document.getElementById('pr-raffle-enable')?.checked);
+      const raffleLimit = raffleEnabled ? Math.max(1, Number(document.getElementById('pr-raffle-limit')?.value || 200)) : 0;
+      const raffleMulti = raffleEnabled && Boolean(document.getElementById('pr-raffle-multi')?.checked);
+
+      const drawTime = raffleEnabled ? (document.getElementById('pr-raffle-draw-time')?.value || '').trim() : '';
+      const memberTier = type === 'member_tier' ? (document.getElementById('pr-mem-tier')?.value || 'Tất cả') : 'Tất cả';
+      const memberMode = type === 'member_tier' ? (document.getElementById('pr-mem-mode')?.value || 'min_pts') : 'min_pts';
+      const memberMinPts = type === 'member_tier' ? Math.max(0, Number(document.getElementById('pr-mem-pts')?.value || 0)) : 0;
+      const memberTopN = type === 'member_tier' ? Math.max(1, Number(document.getElementById('pr-mem-topn')?.value || 3)) : 3;
+      const memberDiscType = type === 'member_tier' ? (document.getElementById('pr-mem-dtype')?.value || 'percent') : 'percent';
+      const memberGift = type === 'member_tier' ? (document.getElementById('pr-mem-gift')?.value || '').trim() : '';
+      const memberOther = type === 'member_tier' ? (document.getElementById('pr-mem-other')?.value || '').trim() : '';
+      const targetProdId = type === 'product_promo' ? (document.getElementById('pr-target-prod')?.value || '') : '';
+      const prodDiscType = type === 'product_promo' ? (document.getElementById('pr-prod-dtype')?.value || 'percent') : 'percent';
+
+      const noNumericVal = type === 'custom' || (type === 'member_tier' && (memberDiscType === 'gift' || memberDiscType === 'other'));
+      const value = noNumericVal ? 0 : Number(document.getElementById('pr-val')?.value || 0);
+      const minOrder = Math.max(0, Number(document.getElementById('pr-min')?.value || 0));
       const scope = document.getElementById('pr-scope')?.value || 'all';
       const startDate = document.getElementById('pr-start')?.value || '';
       const endDate = document.getElementById('pr-end')?.value || '';
-      if (!code) code = 'KM' + String(Date.now()).slice(-4);
-      if (type === 'custom' && !customRule && value <= 0) { showToast('Nhập nội dung ưu đãi tự tạo hoặc mức giảm', 'warn'); return; }
-      if (type !== 'custom' && value <= 0) { showToast('Nhập mức giảm / điểm tặng hợp lệ', 'warn'); return; }
+      if (!editingPromoId) {
+        state.promoSeq = (state.promoSeq || 0) + 1;
+        if (!code || /^MN\d{6}$/.test(code)) code = generateAutoPromoCode(startDate, state.promoSeq);
+      } else if (!code) {
+        code = generateAutoPromoCode(startDate, state.promoSeq || 1);
+      }
+      if (type === 'custom' && !customRule && !name) { showToast('Vui lòng nhập tên hoặc nội dung ưu đãi tự tạo', 'warn'); return; }
+      if (type === 'member_tier' && memberDiscType === 'gift' && !memberGift) { showToast('Vui lòng nhập tên quà tặng', 'warn'); return; }
+      if (type === 'member_tier' && memberDiscType === 'other' && !memberOther) { showToast('Vui lòng nhập nội dung ưu đãi khác', 'warn'); return; }
+      if (!noNumericVal && value <= 0) { showToast('Nhập mức giảm / giá trị phiếu / điểm tặng hợp lệ', 'warn'); return; }
       if (startDate && endDate && endDate < startDate) { showToast('Ngày kết thúc phải sau ngày bắt đầu', 'warn'); return; }
 
       if (editingPromoId) {
@@ -2409,13 +3348,16 @@
         if (pr) {
           pr.name = name || `Ưu đãi ${code}`;
           pr.code = code; pr.type = type; pr.value = value; pr.minOrder = minOrder;
-          pr.scope = scope; pr.startDate = startDate; pr.endDate = endDate; pr.image = tempPromoImage; pr.customRule = customRule;
+          pr.scope = scope; pr.startDate = startDate; pr.endDate = endDate; pr.image = tempPromoImage; pr.customRule = customRule; pr.condMode = condMode; pr.comboIds = comboIds; pr.raffleEnabled = raffleEnabled; pr.raffleLimit = raffleLimit; pr.raffleMulti = raffleMulti; pr.drawTime = drawTime; pr.memberTier = memberTier; pr.memberMode = memberMode; pr.memberMinPts = memberMinPts; pr.memberTopN = memberTopN; pr.memberDiscType = memberDiscType; pr.memberGift = memberGift; pr.memberOther = memberOther; pr.targetProdId = targetProdId; pr.prodDiscType = prodDiscType;
+          if (type === 'member_tier') notifyZaloForMemberPromo(pr); if (typeof pr.raffleIssued !== 'number') pr.raffleIssued = 0;
         }
         editingPromoId = null;
         tempPromoImage = '';
         showToast(`Đã cập nhật chương trình ${code}!`);
       } else {
-        state.promos.unshift({ id: 'PR' + Date.now(), code, name: name || customRule || `Ưu đãi ${code}`, type, customRule, value, minOrder, scope, startDate, endDate, image: tempPromoImage, active: true });
+        const newPr = { id: 'PR' + Date.now(), code, name: name || customRule || `Ưu đãi ${code}`, type, customRule, condMode, comboIds, raffleEnabled, raffleLimit, raffleMulti, drawTime, raffleIssued: 0, memberTier, memberMode, memberMinPts, memberTopN, memberDiscType, memberGift, memberOther, targetProdId, prodDiscType, value, minOrder, scope, startDate, endDate, image: tempPromoImage, active: true };
+        state.promos.unshift(newPr);
+        if (type === 'member_tier') notifyZaloForMemberPromo(newPr);
         tempPromoImage = '';
         showToast(`Đã tạo chương trình ${code}!`);
       }
@@ -2533,6 +3475,425 @@
     }
 
     // ==========================================
+    // 3D. NEW STORE SETUP (CLEAN SLATE RESET)
+    // ==========================================
+    function openNewStoreSetupModal() {
+      const si = state.storeInfo || { name: 'Mini Mart 2', phone: '', branch: state.shift.branch };
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Thiết lập Cửa hàng mới</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-900">
+            Tính năng này giúp xóa sạch doanh thu/đơn hàng mẫu về <b>0đ</b> để bắt đầu bán hàng thực tế cho cửa hàng của bạn.
+          </div>
+          <div class="space-y-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Tên cửa hàng / Siêu thị:</label>
+              <input id="ns-name" type="text" value="${si.name || ''}" placeholder="VD: Mini Mart 2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Chi nhánh:</label>
+                <input id="ns-branch" type="text" value="${state.shift.branch || ''}" placeholder="VD: CN1 - Trảng Bàng" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">SĐT in hóa đơn:</label>
+                <input id="ns-phone" type="tel" value="${si.phone || ''}" placeholder="VD: 0909..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Thu ngân trực ca:</label>
+                <input id="ns-cashier" type="text" value="${state.shift.cashier || ''}" placeholder="Tên nhân viên" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Tiền mặt đầu ca (đ):</label>
+                <input id="ns-opening" type="number" value="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold" />
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ns-clear-orders" type="checkbox" checked class="w-4 h-4 accent-emerald-600" />
+              <span>Xóa toàn bộ đơn hàng & doanh thu mẫu (về 0đ)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ns-clear-products" type="checkbox" class="w-4 h-4 accent-emerald-600" />
+              <span>Xóa luôn danh sách sản phẩm mẫu (tự nhập mới)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="ns-clear-customers" type="checkbox" checked class="w-4 h-4 accent-emerald-600" />
+              <span>Xóa khách hàng hội viên mẫu</span>
+            </label>
+          </div>
+          <button onclick="confirmNewStoreSetup()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold">Xác nhận Thiết lập Cửa hàng mới</button>
+        </div>
+      `);
+    }
+
+    function confirmNewStoreSetup() {
+      const name = (document.getElementById('ns-name')?.value || '').trim() || 'Mini Mart 2';
+      const branch = (document.getElementById('ns-branch')?.value || '').trim() || 'CN1 - Trảng Bàng';
+      const phone = (document.getElementById('ns-phone')?.value || '').trim();
+      const cashier = (document.getElementById('ns-cashier')?.value || '').trim() || 'Thu ngân 1';
+      const opening = Math.max(0, Number(document.getElementById('ns-opening')?.value || 0));
+
+      state.storeInfo = { name, phone, branch };
+      state.shift = {
+        id: 'CA-' + getTodayStr().replace(/-/g, '').slice(2),
+        cashier,
+        branch,
+        startTime: new Date().toTimeString().slice(0, 5),
+        openingCash: opening,
+        closed: false
+      };
+      state.ownerBranch = 'Tất cả chi nhánh';
+
+      if (document.getElementById('ns-clear-orders')?.checked) {
+        state.orders = [];
+        state.heldBills = [];
+        state.cart = [];
+        state.redemptions = [];
+        state.careLogs = [];
+        state.auditLogs = [{ id: 'AL' + Date.now(), time: state.shift.startTime, branch, staff: cashier, action: 'Khởi tạo cửa hàng mới', detail: `Tiền đầu ca: ${fmt(opening)}`, level: 'info' }];
+      }
+      if (document.getElementById('ns-clear-products')?.checked) {
+        state.products = [];
+      }
+      if (document.getElementById('ns-clear-customers')?.checked) {
+        state.customers = [];
+        state.selectedCustomerId = null;
+      }
+
+      closeModal();
+      render();
+      showToast(`Đã thiết lập cửa hàng mới "${name}"!`);
+    }
+
+    function openStoreInfoModal() {
+      const si = state.storeInfo || { name: 'Mini Mart 2', address: '', phone: '', branch: state.shift.branch, footerNote: 'Cảm ơn Quý khách! Hẹn gặp lại!' };
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Thông tin Cửa hàng trên Hóa đơn</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="space-y-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Tên cửa hàng:</label>
+              <input id="si-name" type="text" value="${si.name || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Địa chỉ cửa hàng (in trên hóa đơn):</label>
+              <input id="si-addr" type="text" value="${si.address || ''}" placeholder="VD: Số 123, KP Lộc An, P. Trảng Bàng, Tây Ninh" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Số điện thoại:</label>
+                <input id="si-phone" type="tel" value="${si.phone || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold" />
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Chi nhánh:</label>
+                <input id="si-branch" type="text" value="${state.shift.branch || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Ngày khai trương cửa hàng:</label>
+              <input id="si-open-date" type="date" value="${si.openingDate || '2026-11-01'}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Lời chào cuối hóa đơn:</label>
+              <input id="si-footer" type="text" value="${si.footerNote || 'Cảm ơn Quý khách! Hẹn gặp lại!'}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+          </div>
+          <button onclick="saveStoreInfo()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu thông tin hóa đơn</button>
+        </div>
+      `);
+    }
+
+    function saveStoreInfo() {
+      const name = (document.getElementById('si-name')?.value || '').trim() || 'Mini Mart 2';
+      const address = (document.getElementById('si-addr')?.value || '').trim();
+      const phone = (document.getElementById('si-phone')?.value || '').trim();
+      const branch = (document.getElementById('si-branch')?.value || '').trim() || state.shift.branch;
+      const openingDate = document.getElementById('si-open-date')?.value || (state.storeInfo && state.storeInfo.openingDate) || '2026-11-01';
+      const footerNote = (document.getElementById('si-footer')?.value || '').trim() || 'Cảm ơn Quý khách! Hẹn gặp lại!';
+      state.storeInfo = { name, address, phone, branch, openingDate, footerNote };
+      state.shift.branch = branch;
+      closeModal();
+      render();
+      showToast('Đã cập nhật địa chỉ & SĐT cửa hàng lên hóa đơn!');
+    }
+
+    // ==========================================
+    // 3E. STAFF MANAGEMENT (CHỌN, THÊM, XÓA NHÂN VIÊN)
+    // ==========================================
+    function openStaffManagerModal() {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Quản lý Nhân viên & Chọn ca</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-xs text-emerald-900 space-y-2">
+            <div>Thu ngân đang trực ca: <b>${state.shift.cashier}</b> (${state.shift.startTime} - ${state.shift.endTime || '22:00'})</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" onclick="setShiftTimeMode('auto')" class="py-1.5 rounded-lg text-[11px] font-bold border ${state.shift.mode === 'auto' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200'}">⏱️ Tự động theo giờ</button>
+              <button type="button" onclick="setShiftTimeMode('manual')" class="py-1.5 rounded-lg text-[11px] font-bold border ${state.shift.mode === 'manual' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200'}">✏️ Cài thủ công</button>
+            </div>
+            ${state.shift.mode === 'manual' ? `
+              <div class="flex items-center gap-1.5 pt-1">
+                <input id="sh-start" type="time" value="${state.shift.startTime}" class="flex-1 px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold" />
+                <span class="text-xs">→</span>
+                <input id="sh-end" type="time" value="${state.shift.endTime || '22:00'}" class="flex-1 px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold" />
+                <button type="button" onclick="saveManualShiftTime()" class="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[11px] font-bold">Lưu</button>
+              </div>
+            ` : `<div class="text-[10px] text-emerald-700">Tự động nhận diện Ca Sáng (06:00-14:00), Ca Chiều (14:00-22:00), Ca Đêm (22:00-06:00).</div>`}
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] font-bold text-slate-700">Thêm nhân viên mới</div>
+            <input id="st-name" type="text" placeholder="Họ và tên nhân viên" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+            <div class="grid grid-cols-2 gap-2">
+              <select id="st-role" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs">
+                <option value="Thu ngân">Thu ngân</option>
+                <option value="Ca trưởng">Ca trưởng</option>
+                <option value="Kho & Bán hàng">Kho & Bán hàng</option>
+              </select>
+              <input id="st-phone" type="tel" placeholder="Số điện thoại" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+            </div>
+            <button onclick="addOwnerStaff()" class="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">+ Thêm nhân viên</button>
+          </div>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${state.staffList.map((st, idx) => {
+              const isCurrent = state.shift.cashier === st.name;
+              return `
+                <div class="p-2.5 bg-white rounded-xl border ${isCurrent ? 'border-emerald-500 ring-1' : 'border-slate-200'} flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-800 truncate">${st.name} ${isCurrent ? '<span class="text-[10px] text-emerald-700 font-semibold">(Đang trực)</span>' : ''}</div>
+                    <div class="text-[11px] text-slate-500">${st.role}${st.phone ? ' • ' + st.phone : ''}</div>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    ${!isCurrent ? `<button onclick="selectActiveStaff(${idx})" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[11px] font-semibold">Chọn ca</button>` : ''}
+                    <button onclick="removeOwnerStaff(${idx})" class="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg text-[11px] font-semibold">Xóa</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function setShiftTimeMode(mode) {
+      state.shift.mode = mode;
+      if (mode === 'auto') {
+        const w = getAutoShiftWindow();
+        state.shift.startTime = w.start;
+        state.shift.endTime = w.end;
+        showToast(`Đã bật giờ ca tự động (${w.label}: ${w.start} - ${w.end})`);
+      }
+      render();
+      openStaffManagerModal();
+    }
+
+    function saveManualShiftTime() {
+      const s = document.getElementById('sh-start')?.value;
+      const e = document.getElementById('sh-end')?.value;
+      if (!s || !e) return;
+      state.shift.startTime = s;
+      state.shift.endTime = e;
+      render();
+      openStaffManagerModal();
+      showToast(`Đã lưu giờ ca thủ công: ${s} - ${e}`);
+    }
+
+    function selectActiveStaff(idx) {
+      const st = state.staffList[idx];
+      if (!st) return;
+      state.shift.cashier = st.name;
+      state.auditLogs.unshift({
+        id: 'AL' + Date.now(),
+        time: new Date().toTimeString().slice(0, 5),
+        branch: state.shift.branch,
+        staff: st.name,
+        action: 'Đổi nhân viên trực ca',
+        detail: `Chuyển ca thu ngân sang ${st.name} (${st.role})`,
+        level: 'info'
+      });
+      render();
+      openStaffManagerModal();
+      showToast(`Đã chuyển ca trực sang nhân viên ${st.name}!`);
+    }
+
+    function addOwnerStaff() {
+      const name = (document.getElementById('st-name')?.value || '').trim();
+      const role = document.getElementById('st-role')?.value || 'Thu ngân';
+      const phone = (document.getElementById('st-phone')?.value || '').trim();
+      if (!name) { showToast('Vui lòng nhập tên nhân viên', 'warn'); return; }
+      state.staffList.push({ id: 'NV' + Date.now(), name, role, phone });
+      render();
+      openStaffManagerModal();
+      showToast(`Đã thêm nhân viên ${name}!`);
+    }
+
+    function removeOwnerStaff(idx) {
+      if (state.staffList.length <= 1) { showToast('Cần giữ lại ít nhất 1 nhân viên', 'warn'); return; }
+      const removed = state.staffList[idx];
+      state.staffList.splice(idx, 1);
+      if (state.shift.cashier === removed.name) {
+        state.shift.cashier = state.staffList[0].name;
+      }
+      render();
+      openStaffManagerModal();
+      showToast(`Đã xóa nhân viên ${removed.name}`);
+    }
+
+    // ==========================================
+    // 3F. BRANCHES & WEEKLY STAFF SCHEDULE
+    // ==========================================
+    function openBranchManagerModal() {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Quản lý Chi nhánh (${state.branches.length})</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="flex gap-2">
+            <input id="new-branch-inp" type="text" placeholder="Tên chi nhánh mới (VD: CN3 - Bến Cầu)" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <button onclick="addOwnerBranch()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0">+ Thêm</button>
+          </div>
+          <div class="space-y-2 max-h-72 overflow-y-auto">
+            ${state.branches.map((b, idx) => {
+              const isAct = state.shift.branch === b;
+              return `
+                <div class="p-2.5 bg-white rounded-xl border ${isAct ? 'border-emerald-500 ring-1' : 'border-slate-200'} flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-800 truncate">${b}</div>
+                    ${isAct ? '<div class="text-[10px] text-emerald-700 font-semibold">Đang bán hàng tại chi nhánh này</div>' : ''}
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    ${!isAct ? `<button onclick="setActiveBranch(${idx})" class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-semibold">Chọn bán</button>` : ''}
+                    <button onclick="removeOwnerBranch(${idx})" class="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg text-[10px] font-semibold">Xóa</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function addOwnerBranch() {
+      const val = (document.getElementById('new-branch-inp')?.value || '').trim();
+      if (!val) { showToast('Vui lòng nhập tên chi nhánh', 'warn'); return; }
+      if (state.branches.includes(val)) { showToast('Chi nhánh này đã tồn tại', 'warn'); return; }
+      state.branches.push(val);
+      render();
+      openBranchManagerModal();
+      showToast(`Đã thêm chi nhánh "${val}"!`);
+    }
+
+    function setActiveBranch(idx) {
+      const b = state.branches[idx];
+      if (!b) return;
+      state.shift.branch = b;
+      if (state.storeInfo) state.storeInfo.branch = b;
+      render();
+      openBranchManagerModal();
+      showToast(`Đã chuyển quầy sang ${b}`);
+    }
+
+    function removeOwnerBranch(idx) {
+      if (state.branches.length <= 1) { showToast('Cần giữ lại ít nhất 1 chi nhánh', 'warn'); return; }
+      const removed = state.branches[idx];
+      state.branches.splice(idx, 1);
+      if (state.shift.branch === removed) state.shift.branch = state.branches[0];
+      if (state.ownerBranch === removed) state.ownerBranch = 'Tất cả chi nhánh';
+      render();
+      openBranchManagerModal();
+      showToast(`Đã xóa chi nhánh "${removed}"`);
+    }
+
+    function openWeeklyScheduleModal() {
+      const staffOpts = (selected) => {
+        return `<option value="">-- Nghỉ / Trống --</option>` +
+          state.staffList.map(st => `<option value="${st.name}" ${selected === st.name ? 'selected' : ''}>${st.name} (${st.role})</option>`).join('');
+      };
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Xếp Lịch trực & Ca trực Hàng tuần</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-[11px] text-blue-900 flex items-center justify-between gap-2">
+            <span>Phân ca cho ${state.staffList.length} nhân viên từ Thứ 2 đến Chủ nhật.</span>
+            <button onclick="applyTodaySchedule()" class="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold shrink-0">Áp ca hôm nay</button>
+          </div>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            ${WEEK_DAYS.map((day, dIdx) => {
+              const row = (state.weeklySchedule && state.weeklySchedule[day]) || { sang: '', chieu: '', dem: '' };
+              return `
+                <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                  <div class="text-xs font-extrabold text-slate-800">${day}</div>
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <div>
+                      <label class="text-[10px] text-slate-500 block">Ca Sáng (6-14h)</label>
+                      <select id="ws-${dIdx}-sang" class="w-full px-1.5 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold">${staffOpts(row.sang)}</select>
+                    </div>
+                    <div>
+                      <label class="text-[10px] text-slate-500 block">Ca Chiều (14-22h)</label>
+                      <select id="ws-${dIdx}-chieu" class="w-full px-1.5 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold">${staffOpts(row.chieu)}</select>
+                    </div>
+                    <div>
+                      <label class="text-[10px] text-slate-500 block">Ca Đêm (22-6h)</label>
+                      <select id="ws-${dIdx}-dem" class="w-full px-1.5 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold">${staffOpts(row.dem)}</select>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <button onclick="saveWeeklySchedule()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu Lịch trực tuần</button>
+        </div>
+      `);
+    }
+
+    function saveWeeklySchedule() {
+      const next = {};
+      WEEK_DAYS.forEach((day, dIdx) => {
+        next[day] = {
+          sang: document.getElementById(`ws-${dIdx}-sang`)?.value || '',
+          chieu: document.getElementById(`ws-${dIdx}-chieu`)?.value || '',
+          dem: document.getElementById(`ws-${dIdx}-dem`)?.value || ''
+        };
+      });
+      state.weeklySchedule = next;
+      closeModal();
+      render();
+      showToast('Đã lưu lịch trực tuần cho nhân viên!');
+    }
+
+    function applyTodaySchedule() {
+      const jsDay = new Date().getDay(); // 0=CN, 1=T2..6=T7
+      const mapDay = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+      const todayName = mapDay[jsDay];
+      const h = new Date().getHours();
+      const shiftKey = (h >= 6 && h < 14) ? 'sang' : (h >= 14 && h < 22) ? 'chieu' : 'dem';
+      const shiftLbl = shiftKey === 'sang' ? 'Ca Sáng' : shiftKey === 'chieu' ? 'Ca Chiều' : 'Ca Đêm';
+      const assigned = state.weeklySchedule && state.weeklySchedule[todayName] && state.weeklySchedule[todayName][shiftKey];
+      if (!assigned) {
+        showToast(`${todayName} (${shiftLbl}) chưa xếp nhân viên trực`, 'warn');
+        return;
+      }
+      state.shift.cashier = assigned;
+      render();
+      openWeeklyScheduleModal();
+      showToast(`Đã áp dụng lịch ${todayName} (${shiftLbl}): Thu ngân ${assigned}`);
+    }
+
+    // ==========================================
     // 4. GLOBAL NAVIGATION & INIT
     // ==========================================
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -2545,6 +3906,24 @@
     document.getElementById('btn-role-switch').addEventListener('click', () => {
       state.activeTab = state.activeTab === 'owner' ? 'pos' : 'owner';
       render();
+    });
+
+    let hwScanBuffer = '';
+    let hwScanLastTime = 0;
+    document.addEventListener('keydown', (e) => {
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const now = Date.now();
+      if (now - hwScanLastTime > 120) hwScanBuffer = '';
+      hwScanLastTime = now;
+      if (e.key === 'Enter' && hwScanBuffer.length >= 6) {
+        const code = hwScanBuffer;
+        hwScanBuffer = '';
+        if (state.activeTab === 'inventory') handleScannedBarcode(code, 'inventory');
+        else handleScannedBarcode(code, 'pos');
+      } else if (/^[0-9a-zA-Z]$/.test(e.key)) {
+        hwScanBuffer += e.key;
+      }
     });
 
     window.addEventListener('DOMContentLoaded', () => { render(true); startCloudPolling(); if (cloudConfig.enabled) pullFromCloud(true); });
