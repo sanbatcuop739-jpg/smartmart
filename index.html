@@ -1,487 +1,2008 @@
-<!-- ... existing code ... -->
-                        <p class="text-[11px] text-blue-100 mt-0.5 flex items-center gap-1">
-                            <span id="cloud-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span id="cloud-status-text">Live Sync</span> • <span id="header-role-badge" class="font-bold text-amber-200">Chủ Shop</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <!-- Nút Chuyển vai trò nhanh (Thu ngân <-> Chủ shop) -->
-                    <button onclick="openRoleSwitchModal()" id="btn-role-switch" class="px-2 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-[10px] font-extrabold flex items-center gap-1 border border-white/20 transition tap-scale" title="Đổi vai trò / Khóa quầy">
-                        <i class="fa-solid fa-shield-halved text-amber-300"></i>
-                        <span id="btn-role-label">Quầy</span>
-                    </button>
-                    <!-- Nút Đơn tạm lưu (Hold Orders) -->
-                    <button onclick="openHoldOrdersModal()" class="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 transition tap-scale" title="Đơn hàng đang tạm lưu">
-                        <i class="fa-solid fa-pause-circle text-sm"></i>
-                        <span id="hold-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center shadow border border-blue-700">0</span>
-                    </button>
-                    <!-- Nút Cài đặt (Chỉ hiển thị cho Chủ Shop) -->
-                    <button onclick="openSettingsModal()" id="btn-header-settings" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 transition tap-scale" title="Cài đặt & Mã Cửa Hàng">
-                        <i class="fa-solid fa-gear text-sm"></i>
-                    </button>
-                </div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SmartMart POS — Phần mềm Quản lý Bán hàng Siêu thị Di động</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; border: 0 solid #e2e8f0; }
+    html { line-height: 1.5; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    button, input, select, textarea { font-family: inherit; font-size: 100%; color: inherit; margin: 0; }
+    button { background: transparent; cursor: pointer; }
+    input, select, textarea { background: #fff; }
+    h1, h2, h3, p { margin: 0; }
+    svg { display: block; }
+    .hidden { display: none !important; }
+    .block { display: block; }
+    .flex { display: flex; }
+    .inline-flex { display: inline-flex; }
+    .grid { display: grid; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .flex-1 { flex: 1 1 0%; }
+    .shrink-0 { flex-shrink: 0; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .items-end { align-items: flex-end; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .col-span-2 { grid-column: span 2 / span 2; }
+    .gap-0\.5 { gap: 0.125rem; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-1\.5 { gap: 0.375rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-2\.5 { gap: 0.625rem; }
+    .gap-3 { gap: 0.75rem; }
+    .space-y-0\.5 > * + * { margin-top: 0.125rem; }
+    .space-y-1 > * + * { margin-top: 0.25rem; }
+    .space-y-1\.5 > * + * { margin-top: 0.375rem; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-2\.5 > * + * { margin-top: 0.625rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .fixed { position: fixed; }
+    .sticky { position: sticky; }
+    .inset-0 { inset: 0; }
+    .top-0 { top: 0; }
+    .top-16 { top: 4rem; }
+    .top-1\/2 { top: 50%; }
+    .-top-2 { top: -0.5rem; }
+    .bottom-0 { bottom: 0; }
+    .bottom-16 { bottom: 4rem; }
+    .left-0 { left: 0; }
+    .left-3 { left: 0.75rem; }
+    .left-1\/2 { left: 50%; }
+    .right-0 { right: 0; }
+    .-right-1\.5 { right: -0.375rem; }
+    .-translate-x-1\/2 { transform: translateX(-50%); }
+    .-translate-y-1\/2 { transform: translateY(-50%); }
+    .z-20 { z-index: 20; }
+    .z-30 { z-index: 30; }
+    .z-50 { z-index: 50; }
+    .z-\[60\] { z-index: 60; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .ml-2 { margin-left: 0.5rem; }
+    .mt-0\.5 { margin-top: 0.125rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-1\.5 { margin-bottom: 0.375rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .p-1 { padding: 0.25rem; }
+    .p-1\.5 { padding: 0.375rem; }
+    .p-2 { padding: 0.5rem; }
+    .p-2\.5 { padding: 0.625rem; }
+    .p-3 { padding: 0.75rem; }
+    .p-3\.5 { padding: 0.875rem; }
+    .p-4 { padding: 1rem; }
+    .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-2\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-3\.5 { padding-left: 0.875rem; padding-right: 0.875rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    .pl-9 { padding-left: 2.25rem; }
+    .pr-3 { padding-right: 0.75rem; }
+    .pt-1 { padding-top: 0.25rem; }
+    .pt-1\.5 { padding-top: 0.375rem; }
+    .pt-2 { padding-top: 0.5rem; }
+    .pb-0\.5 { padding-bottom: 0.125rem; }
+    .pb-1 { padding-bottom: 0.25rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .pb-20 { padding-bottom: 5rem; }
+    .w-1\.5 { width: 0.375rem; }
+    .w-3\.5 { width: 0.875rem; }
+    .w-4 { width: 1rem; }
+    .w-5 { width: 1.25rem; }
+    .w-6 { width: 1.5rem; }
+    .w-7 { width: 1.75rem; }
+    .w-8 { width: 2rem; }
+    .w-9 { width: 2.25rem; }
+    .w-10 { width: 2.5rem; }
+    .w-11 { width: 2.75rem; }
+    .w-20 { width: 5rem; }
+    .w-36 { width: 9rem; }
+    .w-full { width: 100%; }
+    .w-\[90\%\] { width: 90%; }
+    .min-w-0 { min-width: 0; }
+    .max-w-md { max-width: 28rem; }
+    .max-w-sm { max-width: 24rem; }
+    .h-1\.5 { height: 0.375rem; }
+    .h-3\.5 { height: 0.875rem; }
+    .h-4 { height: 1rem; }
+    .h-5 { height: 1.25rem; }
+    .h-6 { height: 1.5rem; }
+    .h-7 { height: 1.75rem; }
+    .h-8 { height: 2rem; }
+    .h-9 { height: 2.25rem; }
+    .h-10 { height: 2.5rem; }
+    .h-11 { height: 2.75rem; }
+    .h-16 { height: 4rem; }
+    .h-20 { height: 5rem; }
+    .h-36 { height: 9rem; }
+    .h-48 { height: 12rem; }
+    .h-full { height: 100%; }
+    .min-h-screen { min-height: 100vh; }
+    .max-h-56 { max-height: 14rem; }
+    .max-h-72 { max-height: 18rem; }
+    .max-h-80 { max-height: 20rem; }
+    .max-h-\[88vh\] { max-height: 88vh; }
+    .max-h-\[90vh\] { max-height: 90vh; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-x-auto { overflow-x: auto; }
+    .overflow-y-auto { overflow-y: auto; }
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-\[10px\] { font-size: 10px; line-height: 1.35; }
+    .text-\[11px\] { font-size: 11px; line-height: 1.4; }
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .font-normal { font-weight: 400; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .font-extrabold { font-weight: 800; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .uppercase { text-transform: uppercase; }
+    .underline { text-decoration: underline; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .leading-none { line-height: 1; }
+    .leading-snug { line-height: 1.375; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .rounded-md { border-radius: 0.375rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-t-3xl { border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .border { border-width: 1px; border-style: solid; }
+    .border-t { border-top-width: 1px; border-top-style: solid; }
+    .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+    .border-dashed { border-style: dashed; }
+    .last\:border-0:last-child { border-width: 0; }
+    .border-slate-100 { border-color: #f1f5f9; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-slate-300 { border-color: #cbd5e1; }
+    .border-slate-700 { border-color: #334155; }
+    .border-slate-800 { border-color: #1e293b; }
+    .border-emerald-200 { border-color: #a7f3d0; }
+    .border-emerald-500 { border-color: #10b981; }
+    .border-emerald-600 { border-color: #059669; }
+    .border-amber-200 { border-color: #fde68a; }
+    .border-amber-400 { border-color: #fbbf24; }
+    .border-blue-200 { border-color: #bfdbfe; }
+    .border-cyan-200 { border-color: #a5f3fc; }
+    .border-white\/15 { border-color: rgba(255,255,255,0.15); }
+    .border-white\/20 { border-color: rgba(255,255,255,0.2); }
+    .border-white\/30 { border-color: rgba(255,255,255,0.3); }
+    .ring-1 { box-shadow: 0 0 0 1px rgba(16,185,129,0.3); }
+    .bg-white { background-color: #ffffff; }
+    .bg-white\/15 { background-color: rgba(255,255,255,0.15); }
+    .bg-white\/20 { background-color: rgba(255,255,255,0.2); }
+    .bg-slate-50 { background-color: #f8fafc; }
+    .bg-slate-100 { background-color: #f1f5f9; }
+    .bg-slate-200 { background-color: #e2e8f0; }
+    .bg-slate-200\/70 { background-color: rgba(226,232,240,0.7); }
+    .bg-slate-700 { background-color: #334155; }
+    .bg-slate-800 { background-color: #1e293b; }
+    .bg-slate-900 { background-color: #0f172a; }
+    .bg-slate-900\/60 { background-color: rgba(15,23,42,0.6); }
+    .bg-emerald-50 { background-color: #ecfdf5; }
+    .bg-emerald-100 { background-color: #d1fae5; }
+    .bg-emerald-500 { background-color: #10b981; }
+    .bg-emerald-600 { background-color: #059669; }
+    .bg-emerald-900\/45 { background-color: rgba(6,78,59,0.45); }
+    .bg-lime-400 { background-color: #a3e635; }
+    .bg-amber-50 { background-color: #fffbeb; }
+    .bg-amber-100 { background-color: #fef3c7; }
+    .bg-amber-300 { background-color: #fcd34d; }
+    .bg-amber-500 { background-color: #f59e0b; }
+    .bg-rose-50 { background-color: #fff1f2; }
+    .bg-rose-100 { background-color: #ffe4e6; }
+    .bg-rose-600 { background-color: #e11d48; }
+    .bg-blue-50 { background-color: #eff6ff; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-cyan-100 { background-color: #cffafe; }
+    .bg-gradient-to-r.from-emerald-700 { background: linear-gradient(to right, #047857, #059669, #0d9488); }
+    .bg-gradient-to-r.from-amber-500 { background: linear-gradient(to right, #f59e0b, #f97316); }
+    .bg-gradient-to-br.from-emerald-600 { background: linear-gradient(to bottom right, #059669, #0f766e); }
+    .text-white { color: #ffffff; }
+    .text-slate-300 { color: #cbd5e1; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
+    .text-emerald-100 { color: #d1fae5; }
+    .text-emerald-200 { color: #a7f3d0; }
+    .text-emerald-400 { color: #34d399; }
+    .text-emerald-600 { color: #059669; }
+    .text-emerald-700 { color: #047857; }
+    .text-emerald-800 { color: #065f46; }
+    .text-amber-400 { color: #fbbf24; }
+    .text-amber-600 { color: #d97706; }
+    .text-amber-700 { color: #b45309; }
+    .text-amber-800 { color: #92400e; }
+    .text-amber-900 { color: #78350f; }
+    .text-rose-600 { color: #e11d48; }
+    .text-rose-700 { color: #be123c; }
+    .text-rose-900 { color: #881337; }
+    .text-blue-700 { color: #1d4ed8; }
+    .text-blue-800 { color: #1e40af; }
+    .text-blue-900 { color: #1e3a8a; }
+    .text-cyan-800 { color: #155e75; }
+    .opacity-70 { opacity: 0.7; }
+    .opacity-80 { opacity: 0.8; }
+    .opacity-90 { opacity: 0.9; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+    .shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1); }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); }
+    .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
+    .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .shadow-\[0_-4px_12px_rgba\(0\,0\,0\,0\.05\)\] { box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
+    .pointer-events-none { pointer-events: none; }
+    .pointer-events-auto { pointer-events: auto; }
+    .cursor-pointer { cursor: pointer; }
+    .transition { transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .accent-emerald-600 { accent-color: #059669; }
+    .backdrop-blur { backdrop-filter: blur(8px); }
+    .backdrop-blur-\[1px\] { backdrop-filter: blur(1px); }
+    .active\:scale-95:active { transform: scale(0.95); }
+    .active\:scale-90:active { transform: scale(0.9); }
+    .active\:scale-\[0\.99\]:active { transform: scale(0.99); }
+    .focus\:outline-none:focus { outline: none; }
+    .focus\:ring-2:focus { box-shadow: 0 0 0 2px #10b981; }
+    @media (min-width: 640px) {
+      .sm\:items-center { align-items: center; }
+      .sm\:rounded-3xl { border-radius: 1.5rem; }
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .k80-receipt {
+      font-family: 'Courier New', Courier, monospace;
+      background: #fffef7;
+      border: 1px dashed #cbd5e1;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.25); }
+    }
+    .live-dot { animation: pulse-dot 1.8s infinite; }
+    @keyframes scan-line {
+      0% { top: 10%; }
+      50% { top: 85%; }
+      100% { top: 10%; }
+    }
+    .scanner-laser {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 2px;
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: scan-line 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+  <!-- App Shell -->
+  <div id="app-shell" class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-xl flex flex-col relative pb-20">
+    
+    <!-- Top Header -->
+    <header class="sticky top-0 z-30 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 text-white px-3.5 py-2.5 shadow-md">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0 border border-white/20">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-bold text-sm tracking-tight truncate">SmartMart POS</h1>
+              <button id="btn-cloud-sync" onclick="openCloudSyncModal()" class="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-900/45 hover:bg-emerald-900/70 px-2 py-0.5 rounded-full border border-white/15 transition active:scale-95">
+                <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
+                <span id="sync-label">Cài Cloud</span>
+              </button>
             </div>
-        </header>
-<!-- ... existing code ... -->
-        <!-- THANH ĐIỀU HƯỚNG DƯỚI CÙNG (BOTTOM NAVIGATION BAR - PHÂN QUYỀN THEO VAI TRÒ) -->
-        <nav class="bg-white border-t border-slate-200 px-0.5 py-1.5 flex justify-around items-center z-30 shrink-0 shadow-[0_-4px_15px_rgba(0,0,0,0.04)]">
-            <button onclick="switchTab('pos')" data-tab="pos" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-blue-600 transition">
-                <i class="fa-solid fa-cash-register text-base mb-0.5"></i>
-                <span class="text-[9px] font-bold">Bán hàng</span>
-            </button>
-            <button onclick="switchTab('crm')" data-tab="crm" class="nav-btn relative flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
-                <i class="fa-solid fa-crown text-base mb-0.5"></i>
-                <span class="text-[9px] font-semibold">Hội viên</span>
-                <span id="nav-bday-dot" class="hidden absolute top-1 right-3 w-2 h-2 rounded-full bg-pink-500"></span>
-            </button>
-            <button onclick="switchTab('invoices')" data-tab="invoices" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
-                <i class="fa-solid fa-receipt text-base mb-0.5"></i>
-                <span class="text-[9px] font-semibold">Hóa đơn</span>
-            </button>
-            <button onclick="switchTab('products')" data-tab="products" class="nav-btn flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
-                <i class="fa-solid fa-tags text-base mb-0.5"></i>
-                <span class="text-[9px] font-semibold">Sản phẩm</span>
-            </button>
-            <button onclick="switchTab('inventory')" data-tab="inventory" id="nav-tab-inventory" class="nav-btn owner-only-nav relative flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
-                <i class="fa-solid fa-warehouse text-base mb-0.5"></i>
-                <span class="text-[9px] font-semibold">Kho hàng</span>
-                <span id="nav-low-stock-dot" class="hidden absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-500"></span>
-            </button>
-            <button onclick="switchTab('reports')" data-tab="reports" id="nav-tab-reports" class="nav-btn owner-only-nav flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-slate-600 transition">
-                <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
-                <span class="text-[9px] font-semibold">Báo cáo</span>
-            </button>
-        </nav>
-
-        <!-- MÀN HÌNH KHỞI ĐỘNG / CHỌN CHẾ ĐỘ & LIÊN KẾT MÃ CỬA HÀNG -->
-        <div id="modal-role-gate" class="hidden absolute inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white p-5 flex flex-col justify-between overflow-y-auto">
-            <div class="text-center pt-4 space-y-2">
-                <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center mx-auto shadow-lg">
-                    <i class="fa-solid fa-store text-2xl text-amber-300"></i>
-                </div>
-                <h2 class="text-xl font-extrabold tracking-tight">SmartMart POS Cloud</h2>
-                <p class="text-xs text-blue-200">Đồng bộ thời gian thực giữa Máy Quầy & Điện thoại Chủ Shop</p>
-            </div>
-
-            <div class="space-y-4 my-auto py-4">
-                <!-- Bước 1: Mã Cửa Hàng để liên kết 2 máy -->
-                <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-3xl p-4 space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-extrabold uppercase tracking-wider text-amber-300">1. Mã Cửa Hàng (Store ID)</label>
-                        <button type="button" onclick="generateNewStoreId()" class="text-[11px] font-bold text-blue-300 hover:text-white underline">Tạo mã mới</button>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="gate-store-id" placeholder="VD: SMARTMART-8899" class="flex-1 bg-slate-950/60 border border-white/20 rounded-xl px-3 py-2.5 text-sm font-mono font-extrabold uppercase text-emerald-300 tracking-wider focus:outline-none focus:border-emerald-400">
-                        <button type="button" onclick="copyStoreId()" class="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 rounded-xl text-xs font-bold tap-scale" title="Sao chép mã gửi sang máy khác">
-                            <i class="fa-solid fa-copy"></i>
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-blue-200/80 leading-relaxed">
-                        <i class="fa-solid fa-circle-info mr-1 text-emerald-400"></i>Nhập cùng <strong>Mã Cửa Hàng</strong> trên máy bán hàng tại shop và điện thoại cá nhân của bạn để tự động đồng bộ dữ liệu.
-                    </p>
-                </div>
-
-                <!-- Bước 2: Chọn Chế độ thiết bị -->
-                <div class="space-y-2.5">
-                    <label class="text-xs font-extrabold uppercase tracking-wider text-amber-300 block px-1">2. Chọn Vai trò thiết bị này</label>
-
-                    <!-- Chế độ A: Máy Quầy Thu Ngân -->
-                    <button type="button" onclick="enterAppAsCashier()" class="w-full text-left bg-white text-slate-900 rounded-3xl p-4 shadow-xl hover:bg-blue-50 transition tap-scale border-2 border-transparent hover:border-blue-400">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg shrink-0">
-                                <i class="fa-solid fa-cash-register"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="font-extrabold text-sm text-slate-900">Máy Quầy Thu Ngân</h3>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Mở ngay</span>
-                                </div>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Bán hàng, quét mã, tích điểm hội viên. Tự động ẩn báo cáo doanh thu, lãi gộp & giá vốn.</p>
-                            </div>
-                        </div>
-                    </button>
-
-                    <!-- Chế độ B: Chủ Cửa Hàng (Khóa PIN 4 số) -->
-                    <div class="bg-slate-900/90 border border-amber-400/40 rounded-3xl p-4 space-y-3 shadow-xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-lg shrink-0">
-                                <i class="fa-solid fa-user-shield"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="font-extrabold text-sm text-white">Chủ Cửa Hàng (Giám sát)</h3>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300">Bảo mật PIN</span>
-                                </div>
-                                <p class="text-[11px] text-slate-300 mt-0.5">Xem doanh thu real-time, lợi nhuận, tồn kho & quản lý từ xa.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <input type="password" inputmode="numeric" maxlength="4" id="gate-owner-pin" placeholder="PIN 4 số (Mặc định: 1234)" class="flex-1 bg-slate-950 border border-white/20 rounded-xl px-3 py-2 text-xs font-mono font-bold text-center tracking-[0.35em] text-white focus:outline-none focus:border-amber-400">
-                            <button type="button" onclick="enterAppAsOwner()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold tap-scale shrink-0">
-                                Mở khóa
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <p class="text-center text-[10px] text-slate-400 pb-2">Mọi giao dịch tại quầy được mã hóa & đồng bộ tức thì về máy chủ</p>
+            <p class="text-[11px] text-emerald-100 truncate" id="header-subtitle">CN1 Trảng Bàng • Ca: Minh Anh</p>
+          </div>
         </div>
-<!-- ... existing code ... -->
-        <!-- 12. MODAL CÀI ĐẶT, MÃ CỬA HÀNG & ĐỔI MÃ PIN CHỦ SHOP -->
-        <div id="modal-settings" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl p-4 w-full max-w-[350px] max-h-[88%] overflow-y-auto space-y-3.5 shadow-2xl">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <h3 class="font-bold text-base text-slate-800">Cài đặt & Phân quyền Chủ Shop</h3>
-                    <button onclick="closeModal('modal-settings')" class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
-                </div>
-
-                <!-- Thông tin Mã Cửa Hàng đang kết nối -->
-                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-blue-900"><i class="fa-solid fa-cloud text-blue-600 mr-1"></i>Mã Cửa Hàng liên kết:</span>
-                        <button onclick="copyStoreId()" class="text-[11px] font-extrabold text-blue-700 underline">Sao chép</button>
-                    </div>
-                    <p id="settings-store-id-display" class="font-mono text-sm font-extrabold text-blue-800 bg-white px-2.5 py-1.5 rounded-xl border border-blue-100 text-center">SMARTMART-8899</p>
-                    <button onclick="openRoleSwitchModal()" class="w-full py-2 bg-blue-600 text-white rounded-xl font-bold text-[11px] tap-scale">
-                        Đổi Mã Cửa Hàng / Khóa sang Chế độ Quầy
-                    </button>
-                </div>
-
-                <!-- Đổi mã PIN Chủ Cửa Hàng -->
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs space-y-2">
-                    <label class="font-bold text-slate-800 block"><i class="fa-solid fa-key text-amber-500 mr-1"></i>Đổi mã PIN Chủ Cửa Hàng (4 số):</label>
-                    <div class="flex gap-2">
-                        <input type="password" inputmode="numeric" maxlength="4" id="setting-new-pin" placeholder="Nhập PIN mới (4 số)" class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-center tracking-widest">
-                        <button onclick="updateOwnerPin()" class="px-3.5 py-2 bg-slate-900 text-white rounded-xl font-bold tap-scale">Lưu PIN</button>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5 text-xs">
-                    <label class="font-bold text-slate-700 block">Nhân viên thu ngân trực ca:</label>
-                    <select id="setting-cashier" onchange="updateCashier(this.value)" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 font-semibold bg-white">
-                        <option value="Minh Anh">Minh Anh (Ca trưởng)</option>
-                        <option value="Hoàng Nam">Hoàng Nam (Thu ngân 02)</option>
-                        <option value="Thu Thảo">Thu Thảo (Thu ngân 03)</option>
-                    </select>
-                </div>
-
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs space-y-2">
-                    <p class="font-bold text-amber-800"><i class="fa-solid fa-database mr-1"></i> Khôi phục dữ liệu mẫu</p>
-                    <button onclick="resetDemoData()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-sm tap-scale">
-                        <i class="fa-solid fa-rotate mr-1"></i> Khôi phục dữ liệu mẫu siêu thị
-                    </button>
-                </div>
-            </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="btn-role-switch" class="text-[11px] font-semibold bg-white/15 hover:bg-white/25 active:scale-95 transition px-2.5 py-1.5 rounded-lg border border-white/20 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span id="role-switch-text">Chế độ Chủ</span>
+          </button>
         </div>
-<!-- ... existing code ... -->
-    <!-- ==================== LOGIC XỬ LÝ TOÀN DIỆN SMARTMART POS ==================== -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      </div>
+    </header>
 
-        // Kết nối Firebase Firestore thời gian thực (tự động fallback nếu chưa cấu hình môi trường)
-        window.CloudSync = {
-            db: null,
-            user: null,
-            unsubscribe: null,
-            isApplyingRemote: false,
-            async init() {
-                try {
-                    if (typeof __firebase_config === 'undefined') return false;
-                    const firebaseConfig = JSON.parse(__firebase_config);
-                    const fbApp = initializeApp(firebaseConfig);
-                    const auth = getAuth(fbApp);
-                    this.db = getFirestore(fbApp);
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 overflow-y-auto"></main>
 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        const cred = await signInWithCustomToken(auth, __initial_auth_token);
-                        this.user = cred.user;
-                    } else {
-                        const cred = await signInAnonymously(auth);
-                        this.user = cred.user;
-                    }
-                    return true;
-                } catch (err) {
-                    console.warn('Chạy chế độ LocalStorage ngoại tuyến:', err);
-                    return false;
-                }
+    <!-- Sticky Bottom Cart Bar (only visible on POS tab when cart > 0) -->
+    <div id="pos-cart-bar" class="hidden fixed bottom-16 left-0 right-0 z-20 px-3 pointer-events-none">
+      <div class="max-w-md mx-auto pointer-events-auto">
+        <button id="btn-open-cart" class="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl px-4 py-3 shadow-lg flex items-center justify-between active:scale-[0.99] transition border border-slate-700">
+          <div class="flex items-center gap-2.5">
+            <span id="cart-bar-count" class="bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-xl">0</span>
+            <div class="text-left">
+              <div class="text-xs text-slate-300" id="cart-bar-customer">Khách lẻ</div>
+              <div class="text-sm font-bold" id="cart-bar-total">0đ</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 text-emerald-400 font-semibold text-sm">
+            <span>Thanh toán</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+      <div class="max-w-md mx-auto grid grid-cols-5 h-16">
+        <button data-tab="pos" class="nav-btn flex flex-col items-center justify-center gap-0.5 text-emerald-600 font-semibold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-[10px]">Bán hàng</span>
+        </button>
+        <button data-tab="crm" class="nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+          </svg>
+          <span class="text-[10px]">Khách & Quà</span>
+        </button>
+        <button data-tab="inventory" class="nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          <span class="text-[10px]">Kho hàng</span>
+        </button>
+        <button data-tab="orders" class="nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="text-[10px]">Đơn & Ca</span>
+        </button>
+        <button data-tab="owner" class="nav-btn flex flex-col items-center justify-center gap-0.5 text-slate-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span class="text-[10px]">Chủ shop</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Reusable Modal Container -->
+  <div id="modal-root" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-[1px] flex items-end sm:items-center justify-center">
+    <div id="modal-box" class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-root" class="fixed top-16 left-1/2 -translate-x-1/2 z-[60] pointer-events-none flex flex-col gap-2 w-[90%] max-w-sm"></div>
+
+  <script>
+    // ==========================================
+    // 1. INITIAL DATA & STATE MANAGEMENT
+    // ==========================================
+    const STORAGE_KEY = 'smartmart_pos_v2';
+    const CLOUD_CFG_KEY = 'smartmart_cloud_cfg_v1';
+
+    function loadCloudConfig() {
+      try {
+        const raw = localStorage.getItem(CLOUD_CFG_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return { enabled: false, url: '', storeId: 'SMARTMART-01', lastSync: '' };
+    }
+
+    let cloudConfig = loadCloudConfig();
+    let cloudPushTimer = null;
+    let cloudPollTimer = null;
+
+    function saveCloudConfig() {
+      try { localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cloudConfig)); } catch (e) {}
+    }
+
+    function getCloudEndpoint() {
+      const base = (cloudConfig.url || '').trim().replace(/\/+$/, '');
+      const store = (cloudConfig.storeId || 'SMARTMART-01').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!base.startsWith('https://')) return '';
+      return `${base}/smartmart_stores/${store}.json`;
+    }
+
+    function getSharedPayload() {
+      return {
+        products: state.products,
+        customers: state.customers,
+        gifts: state.gifts,
+        orders: state.orders,
+        heldBills: state.heldBills,
+        shift: state.shift,
+        redemptions: state.redemptions,
+        careLogs: state.careLogs,
+        auditLogs: state.auditLogs,
+        updatedAt: Date.now()
+      };
+    }
+
+    function applySharedPayload(data) {
+      if (!data || typeof data !== 'object') return false;
+      if (Array.isArray(data.products)) state.products = data.products;
+      if (Array.isArray(data.customers)) state.customers = data.customers;
+      if (Array.isArray(data.gifts)) state.gifts = data.gifts;
+      if (Array.isArray(data.orders)) state.orders = data.orders;
+      if (Array.isArray(data.heldBills)) state.heldBills = data.heldBills;
+      if (data.shift && typeof data.shift === 'object') state.shift = data.shift;
+      if (Array.isArray(data.redemptions)) state.redemptions = data.redemptions;
+      if (Array.isArray(data.careLogs)) state.careLogs = data.careLogs;
+      if (Array.isArray(data.auditLogs)) state.auditLogs = data.auditLogs;
+      return true;
+    }
+
+    async function pushToCloud(silent = true) {
+      const endpoint = getCloudEndpoint();
+      if (!cloudConfig.enabled || !endpoint) return false;
+      try {
+        const res = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(getSharedPayload())
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        cloudConfig.lastSync = new Date().toTimeString().slice(0, 8);
+        saveCloudConfig();
+        updateSyncBadge();
+        if (!silent) showToast('Đã đẩy dữ liệu lên đám mây!');
+        return true;
+      } catch (err) {
+        if (!silent) showToast('Lỗi đẩy dữ liệu Cloud: kiểm tra URL & Rules Firebase', 'error');
+        return false;
+      }
+    }
+
+    async function pullFromCloud(silent = true) {
+      const endpoint = getCloudEndpoint();
+      if (!cloudConfig.enabled || !endpoint) return false;
+      try {
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data && applySharedPayload(data)) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+          cloudConfig.lastSync = new Date().toTimeString().slice(0, 8);
+          saveCloudConfig();
+          render(true);
+          if (!silent) showToast('Đã tải dữ liệu mới nhất từ đám mây!');
+          return true;
+        } else {
+          if (!silent) {
+            await pushToCloud(true);
+            showToast('Kho dữ liệu mới trên Cloud — đã khởi tạo dữ liệu cửa hàng!');
+          }
+          return true;
+        }
+      } catch (err) {
+        if (!silent) showToast('Không thể kết nối Firebase. Kiểm tra lại URL https://...', 'error');
+        return false;
+      }
+    }
+
+    function scheduleCloudPush() {
+      if (!cloudConfig.enabled) return;
+      clearTimeout(cloudPushTimer);
+      cloudPushTimer = setTimeout(() => pushToCloud(true), 600);
+    }
+
+    function startCloudPolling() {
+      clearInterval(cloudPollTimer);
+      if (cloudConfig.enabled && getCloudEndpoint()) {
+        cloudPollTimer = setInterval(() => pullFromCloud(true), 6000);
+      }
+    }
+
+    function updateSyncBadge() {
+      const dot = document.getElementById('sync-dot');
+      const label = document.getElementById('sync-label');
+      if (!dot || !label) return;
+      if (cloudConfig.enabled && getCloudEndpoint()) {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-lime-400 live-dot';
+        label.textContent = 'Cloud Live';
+      } else {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-300';
+        label.textContent = 'Offline';
+      }
+    }
+
+    function openCloudSyncModal() {
+      const isConn = cloudConfig.enabled && getCloudEndpoint();
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">☁️</span>
+              <h3 class="font-bold text-sm text-slate-900">Đồng bộ Đám mây (Firebase Miễn phí)</h3>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+
+          <div class="p-2.5 rounded-xl text-xs ${isConn ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-amber-50 border border-amber-200 text-amber-900'}">
+            Trạng thái: <b>${isConn ? 'Đã kết nối Cloud (Đồng bộ tự động 6s/lần)' : 'Đang chạy Offline trên máy'}</b>
+            ${cloudConfig.lastSync ? `<div class="text-[11px] opacity-80 mt-0.5">Đồng bộ lần cuối: ${cloudConfig.lastSync}</div>` : ''}
+          </div>
+
+          <div class="space-y-2">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">1. Đường dẫn Firebase Realtime Database (HTTPS)</label>
+              <input id="cloud-url-input" type="url" value="${cloudConfig.url || ''}" placeholder="https://ten-du-an-default-rtdb.asia-southeast1.firebasedatabase.app"
+                class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">2. Mã cửa hàng (Nhập giống nhau trên máy Chủ & Nhân viên)</label>
+              <input id="cloud-store-input" type="text" value="${cloudConfig.storeId || 'SMARTMART-01'}" placeholder="SMARTMART-01"
+                class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="connectCloudSync(false)" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">Kết nối & Tải về</button>
+            <button onclick="connectCloudSync(true)" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">Đẩy máy này lên</button>
+          </div>
+          ${isConn ? `
+            <button onclick="disconnectCloudSync()" class="w-full py-2 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold">Ngắt kết nối (Về chế độ Offline)</button>
+          ` : ''}
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
+            <div class="font-bold text-slate-800">Hướng dẫn tạo Firebase miễn phí (2 phút):</div>
+            <div>1. Vào <b>console.firebase.google.com</b> → Tạo dự án mới (Miễn phí).</div>
+            <div>2. Chọn <b>Build → Realtime Database → Create Database</b> (chọn Singapore).</div>
+            <div>3. Ở tab <b>Rules</b>, đổi <code>.read</code> và <code>.write</code> thành <code>true</code> (hoặc dùng trong nội bộ) rồi copy đường dẫn <code>https://...firebasedatabase.app</code> dán vào ô trên.</div>
+          </div>
+
+          <button onclick="resetDemoData()" class="w-full py-2 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-semibold">Khôi phục dữ liệu mẫu ban đầu</button>
+        </div>
+      `);
+    }
+
+    async function connectCloudSync(pushFirst) {
+      const url = (document.getElementById('cloud-url-input')?.value || '').trim();
+      const storeId = (document.getElementById('cloud-store-input')?.value || 'SMARTMART-01').trim().toUpperCase();
+      if (!url.startsWith('https://')) {
+        showToast('Vui lòng nhập URL Firebase bắt đầu bằng https://', 'warn');
+        return;
+      }
+      cloudConfig.url = url;
+      cloudConfig.storeId = storeId || 'SMARTMART-01';
+      cloudConfig.enabled = true;
+      saveCloudConfig();
+      const ok = pushFirst ? await pushToCloud(false) : await pullFromCloud(false);
+      if (ok) {
+        startCloudPolling();
+        updateSyncBadge();
+        closeModal();
+        render(true);
+      }
+    }
+
+    function disconnectCloudSync() {
+      cloudConfig.enabled = false;
+      saveCloudConfig();
+      clearInterval(cloudPollTimer);
+      updateSyncBadge();
+      closeModal();
+      render(true);
+      showToast('Đã chuyển sang chế độ Offline trên máy');
+    }
+
+    function resetDemoData() {
+      state.products = JSON.parse(JSON.stringify(INITIAL_PRODUCTS));
+      state.customers = JSON.parse(JSON.stringify(INITIAL_CUSTOMERS));
+      state.gifts = JSON.parse(JSON.stringify(INITIAL_GIFTS));
+      state.orders = JSON.parse(JSON.stringify(INITIAL_ORDERS));
+      state.careLogs = JSON.parse(JSON.stringify(INITIAL_CARE_LOGS));
+      state.auditLogs = JSON.parse(JSON.stringify(INITIAL_AUDIT_LOGS));
+      state.heldBills = [];
+      state.cart = [];
+      state.redemptions = [];
+      closeModal();
+      render();
+      showToast('Đã khôi phục dữ liệu mẫu!');
+    }
+
+    const INITIAL_PRODUCTS = [
+      { id: 'P01', barcode: '8934588012013', name: 'Sữa tươi Vinamilk 100% Ít đường 1L', category: 'Đồ uống', price: 36000, cost: 29500, stock: 42, unit: 'Hộp', emoji: '🥛' },
+      { id: 'P02', barcode: '8934563138165', name: 'Mì Hảo Hảo Tôm Chua Cay (Lốc 5)', category: 'Thực phẩm', price: 22500, cost: 18000, stock: 68, unit: 'Lốc', emoji: '🍜' },
+      { id: 'P03', barcode: '8934868112019', name: 'Dầu ăn Neptune Light 1L', category: 'Thực phẩm', price: 58000, cost: 48500, stock: 19, unit: 'Chai', emoji: '🌻' },
+      { id: 'P04', barcode: '8935049500547', name: 'Nước suối Aquafina 500ml (Lốc 6)', category: 'Đồ uống', price: 28000, cost: 21000, stock: 34, unit: 'Lốc', emoji: '💧' },
+      { id: 'P05', barcode: '8934839120111', name: 'Nước giặt OMO Matic Cửa trước 3.6kg', category: 'Hóa mỹ phẩm', price: 189000, cost: 152000, stock: 7, unit: 'Túi', emoji: '🧴' },
+      { id: 'P06', barcode: '8934673101012', name: 'Gạo ST25 Ông Cua Túi 5kg', category: 'Thực phẩm', price: 195000, cost: 165000, stock: 14, unit: 'Túi', emoji: '🌾' },
+      { id: 'P07', barcode: '8935001712345', name: 'Cà phê G7 3in1 Hòa tan (Hộp 21 gói)', category: 'Đồ uống', price: 62000, cost: 49000, stock: 25, unit: 'Hộp', emoji: '☕' },
+      { id: 'P08', barcode: '8934602001025', name: 'Bánh ChocoPie Orion Hộp 12 cái', category: 'Bánh kẹo', price: 54000, cost: 43000, stock: 31, unit: 'Hộp', emoji: '🍫' },
+      { id: 'P09', barcode: '8936036021118', name: 'Trứng gà ta Ba Huân (Vỉ 10 quả)', category: 'Tươi sống', price: 35000, cost: 27000, stock: 6, unit: 'Vỉ', emoji: '🥚' },
+      { id: 'P10', barcode: '8934804015014', name: 'Nước mắm Nam Ngư Đệ Nhị 900ml', category: 'Thực phẩm', price: 32000, cost: 25500, stock: 29, unit: 'Chai', emoji: '🧂' },
+      { id: 'P11', barcode: '8934868145024', name: 'Dầu gội Clear Bạc Hà 630g', category: 'Hóa mỹ phẩm', price: 168000, cost: 134000, stock: 4, unit: 'Chai', emoji: '🧼' },
+      { id: 'P12', barcode: '8935049001122', name: 'Trà xanh Không Độ 455ml (Lốc 6)', category: 'Đồ uống', price: 52000, cost: 41000, stock: 22, unit: 'Lốc', emoji: '🍵' },
+      { id: 'P13', barcode: '8936011223344', name: 'Thịt ba rọi heo VietGAP Khay 500g', category: 'Tươi sống', price: 82000, cost: 65000, stock: 9, unit: 'Khay', emoji: '🥩' },
+      { id: 'P14', barcode: '8934680005511', name: 'Snack Khoai tây Lay’s Vị Tự nhiên 95g', category: 'Bánh kẹo', price: 24000, cost: 18000, stock: 40, unit: 'Gói', emoji: '🥔' }
+    ];
+
+    const INITIAL_CUSTOMERS = [
+      { id: 'C01', name: 'Nguyễn Thị Lan', phone: '0908123456', tier: 'Kim Cương', points: 1450, totalSpent: 18450000, visits: 34, birthday: '1988-11-18', lastVisit: '2026-11-14', note: 'Thích mua gạo ST25 & sữa ít đường', cared: false },
+      { id: 'C02', name: 'Trần Văn Hùng', phone: '0913456789', tier: 'Vàng', points: 620, totalSpent: 7850000, visits: 18, birthday: '1985-05-20', lastVisit: '2026-11-15', note: 'Hay mua đồ uống cuối tuần', cared: true },
+      { id: 'C03', name: 'Lê Hoàng Mai', phone: '0987654321', tier: 'Bạc', points: 285, totalSpent: 3420000, visits: 9, birthday: '1993-11-22', lastVisit: '2026-10-25', note: 'Chưa quay lại hơn 20 ngày - cần gửi voucher', cared: false },
+      { id: 'C04', name: 'Phạm Quốc Bảo', phone: '0939112233', tier: 'Vàng', points: 890, totalSpent: 9600000, visits: 21, birthday: '1990-02-10', lastVisit: '2026-11-12', note: 'Khách doanh nghiệp nhỏ, hay lấy hóa đơn', cared: false },
+      { id: 'C05', name: 'Võ Ngọc Ánh', phone: '0977889900', tier: 'Thành viên', points: 95, totalSpent: 1150000, visits: 4, birthday: '1996-11-15', lastVisit: '2026-11-10', note: 'Sinh nhật hôm nay!', cared: false }
+    ];
+
+    const INITIAL_GIFTS = [
+      { id: 'G01', name: 'Túi vải Canvas SmartMart', pointsCost: 150, stock: 25, type: 'Quà tặng', valueText: 'Trị giá 45.000đ', emoji: '🛍️' },
+      { id: 'G02', name: 'Voucher Giảm 50.000đ hóa đơn', pointsCost: 400, stock: 99, type: 'Voucher', valueText: 'Áp dụng đơn từ 200k', emoji: '🎟️' },
+      { id: 'G03', name: 'Dầu ăn Neptune Light 1L', pointsCost: 500, stock: 12, type: 'Sản phẩm', valueText: 'Trị giá 58.000đ', emoji: '🌻' },
+      { id: 'G04', name: 'Bình giữ nhiệt Inox 500ml', pointsCost: 750, stock: 8, type: 'Quà tặng', valueText: 'Trị giá 145.000đ', emoji: '🥤' },
+      { id: 'G05', name: 'Nước giặt OMO Matic 3.6kg', pointsCost: 1200, stock: 5, type: 'Sản phẩm', valueText: 'Trị giá 189.000đ', emoji: '🧴' }
+    ];
+
+    const INITIAL_ORDERS = [
+      { id: 'HD-261115-01', time: '08:15', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C02', customerName: 'Trần Văn Hùng', items: [{ id: 'P01', name: 'Sữa tươi Vinamilk 100% Ít đường 1L', qty: 2, price: 36000, cost: 29500 }, { id: 'P07', name: 'Cà phê G7 3in1 Hòa tan', qty: 1, price: 62000, cost: 49000 }], subtotal: 134000, discount: 0, pointsUsed: 0, total: 134000, pointsEarned: 13, method: 'Tiền mặt', status: 'Hoàn thành' },
+      { id: 'HD-261115-02', time: '09:42', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C01', customerName: 'Nguyễn Thị Lan', items: [{ id: 'P06', name: 'Gạo ST25 Ông Cua Túi 5kg', qty: 2, price: 195000, cost: 165000 }, { id: 'P05', name: 'Nước giặt OMO Matic Cửa trước 3.6kg', qty: 1, price: 189000, cost: 152000 }], subtotal: 579000, discount: 50000, pointsUsed: 0, total: 529000, pointsEarned: 79, method: 'VietQR', status: 'Hoàn thành' },
+      { id: 'HD-261115-03', time: '11:05', branch: 'CN2 - Gò Dầu', cashier: 'Quốc Huy', customerId: null, customerName: 'Khách lẻ', items: [{ id: 'P02', name: 'Mì Hảo Hảo Tôm Chua Cay (Lốc 5)', qty: 3, price: 22500, cost: 18000 }, { id: 'P04', name: 'Nước suối Aquafina 500ml (Lốc 6)', qty: 2, price: 28000, cost: 21000 }], subtotal: 123500, discount: 0, pointsUsed: 0, total: 123500, pointsEarned: 0, method: 'Tiền mặt', status: 'Hoàn thành' },
+      { id: 'HD-261115-04', time: '12:30', branch: 'CN1 - Trảng Bàng', cashier: 'Minh Anh', customerId: 'C04', customerName: 'Phạm Quốc Bảo', items: [{ id: 'P11', name: 'Dầu gội Clear Bạc Hà 630g', qty: 2, price: 168000, cost: 134000 }, { id: 'P13', name: 'Thịt ba rọi heo VietGAP Khay 500g', qty: 2, price: 82000, cost: 65000 }], subtotal: 500000, discount: 20000, pointsUsed: 0, total: 480000, pointsEarned: 58, method: 'Thẻ / Ví', status: 'Hoàn thành' }
+    ];
+
+    const INITIAL_CARE_LOGS = [
+      { id: 'CL01', time: '09:00', customerName: 'Trần Văn Hùng', channel: 'Zalo OA', message: 'Cảm ơn anh Hùng đã mua sắm tại SmartMart! Anh đang có 620 điểm tích lũy.' }
+    ];
+
+    const INITIAL_AUDIT_LOGS = [
+      { id: 'AL01', time: '07:55', branch: 'CN1 - Trảng Bàng', staff: 'Minh Anh', action: 'Mở ca sáng', detail: 'Tiền đầu ca: 2.000.000đ', level: 'info' },
+      { id: 'AL02', time: '09:42', branch: 'CN1 - Trảng Bàng', staff: 'Minh Anh', action: 'Áp dụng mã VIP50K', detail: 'Giảm 50.000đ cho HĐ HD-261115-02', level: 'warn' },
+      { id: 'AL03', time: '12:30', branch: 'CN1 - Trảng Bàng', staff: 'Minh Anh', action: 'Áp dụng mã SIEUTHI20K', detail: 'Giảm 20.000đ cho HĐ HD-261115-04', level: 'warn' }
+    ];
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return null;
+    }
+
+    const saved = loadState();
+    const state = saved || {
+      activeTab: 'pos',
+      crmSubTab: 'list',
+      posCategory: 'Tất cả',
+      posSearch: '',
+      invFilter: 'all',
+      invSearch: '',
+      orderSearch: '',
+      ownerBranch: 'Tất cả chi nhánh',
+      ownerTimeframe: 'Hôm nay',
+      products: INITIAL_PRODUCTS,
+      customers: INITIAL_CUSTOMERS,
+      gifts: INITIAL_GIFTS,
+      orders: INITIAL_ORDERS,
+      heldBills: [],
+      cart: [],
+      selectedCustomerId: null,
+      promoCode: '',
+      usePoints: false,
+      shift: {
+        id: 'CA-261115-S',
+        cashier: 'Minh Anh',
+        branch: 'CN1 - Trảng Bàng',
+        startTime: '07:55',
+        openingCash: 2000000,
+        closed: false
+      },
+      redemptions: [],
+      careLogs: INITIAL_CARE_LOGS,
+      auditLogs: INITIAL_AUDIT_LOGS
+    };
+
+    function saveState(skipCloud = false) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+      if (!skipCloud) scheduleCloudPush();
+    }
+
+    // ==========================================
+    // 2. HELPERS & SOUND / TOAST / MODAL
+    // ==========================================
+    const fmt = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
+
+    function playBeep(freq = 1200, duration = 0.07) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.08;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, duration * 1000);
+      } catch (e) {}
+    }
+
+    function showToast(msg, type = 'success') {
+      const root = document.getElementById('toast-root');
+      const el = document.createElement('div');
+      const colors = type === 'error'
+        ? 'bg-rose-600 text-white'
+        : type === 'warn'
+        ? 'bg-amber-500 text-white'
+        : 'bg-slate-900 text-white';
+      el.className = `${colors} text-xs font-medium px-3.5 py-2.5 rounded-xl shadow-lg flex items-center justify-between gap-2 transition-all duration-200`;
+      el.innerHTML = `<span>${msg}</span>`;
+      root.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 200);
+      }, 2400);
+    }
+
+    function openModal(html) {
+      const root = document.getElementById('modal-root');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = html;
+      root.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-root').classList.add('hidden');
+      document.getElementById('modal-box').innerHTML = '';
+    }
+
+    document.getElementById('modal-root').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-root') closeModal();
+    });
+
+    function getTierMultiplier(tier) {
+      if (tier === 'Kim Cương') return 1.5;
+      if (tier === 'Vàng') return 1.2;
+      if (tier === 'Bạc') return 1.1;
+      return 1.0;
+    }
+
+    function getTierBadge(tier) {
+      const map = {
+        'Kim Cương': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        'Vàng': 'bg-amber-100 text-amber-800 border-amber-200',
+        'Bạc': 'bg-slate-200 text-slate-700 border-slate-300',
+        'Thành viên': 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      };
+      return map[tier] || map['Thành viên'];
+    }
+
+    function calcCartTotals() {
+      const subtotal = state.cart.reduce((s, item) => s + item.price * item.qty, 0);
+      let promoDiscount = 0;
+      const code = (state.promoCode || '').trim().toUpperCase();
+      if (code === 'GIAM10') promoDiscount = Math.round(subtotal * 0.1);
+      else if (code === 'SIEUTHI20K' && subtotal >= 100000) promoDiscount = 20000;
+      else if (code === 'VIP50K' && subtotal >= 300000) promoDiscount = 50000;
+
+      const customer = state.customers.find(c => c.id === state.selectedCustomerId);
+      let pointsUsed = 0;
+      let pointsDiscount = 0;
+      if (state.usePoints && customer && customer.points > 0) {
+        const maxDiscount = Math.max(0, subtotal - promoDiscount);
+        const maxPtsPossible = Math.floor(maxDiscount / 100);
+        pointsUsed = Math.min(customer.points, maxPtsPossible);
+        pointsDiscount = pointsUsed * 100;
+      }
+
+      const total = Math.max(0, subtotal - promoDiscount - pointsDiscount);
+      const mult = customer ? getTierMultiplier(customer.tier) : 1;
+      const pointsEarned = customer ? Math.floor((total / 10000) * mult) : 0;
+
+      return { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer };
+    }
+
+    // ==========================================
+    // 3. TAB RENDERERS
+    // ==========================================
+    let ownerChartInstance = null;
+
+    function render(skipCloud = false) {
+      saveState(skipCloud);
+      updateSyncBadge();
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isAct = btn.dataset.tab === state.activeTab;
+        btn.className = `nav-btn flex flex-col items-center justify-center gap-0.5 transition ${isAct ? 'text-emerald-600 font-bold' : 'text-slate-500 font-medium'}`;
+      });
+
+      const roleText = document.getElementById('role-switch-text');
+      const headerSub = document.getElementById('header-subtitle');
+      if (state.activeTab === 'owner') {
+        roleText.textContent = 'Về Quầy POS';
+        headerSub.textContent = `Tra cứu từ xa • ${state.ownerBranch}`;
+      } else {
+        roleText.textContent = 'Chế độ Chủ';
+        headerSub.textContent = `${state.shift.branch} • Ca: ${state.shift.cashier}`;
+      }
+
+      const cartBar = document.getElementById('pos-cart-bar');
+      if (state.activeTab === 'pos' && state.cart.length > 0) {
+        const totals = calcCartTotals();
+        const totalQty = state.cart.reduce((s, i) => s + i.qty, 0);
+        document.getElementById('cart-bar-count').textContent = totalQty;
+        document.getElementById('cart-bar-total').textContent = fmt(totals.total);
+        document.getElementById('cart-bar-customer').textContent = totals.customer ? `${totals.customer.name} (${totals.customer.points}đ)` : 'Khách lẻ';
+        cartBar.classList.remove('hidden');
+      } else {
+        cartBar.classList.add('hidden');
+      }
+
+      const main = document.getElementById('main-content');
+      if (state.activeTab === 'pos') renderPOS(main);
+      else if (state.activeTab === 'crm') renderCRM(main);
+      else if (state.activeTab === 'inventory') renderInventory(main);
+      else if (state.activeTab === 'orders') renderOrders(main);
+      else if (state.activeTab === 'owner') renderOwner(main);
+    }
+
+    // ---------- TAB 1: POS ----------
+    function renderPOS(container) {
+      const categories = ['Tất cả', 'Đồ uống', 'Thực phẩm', 'Hóa mỹ phẩm', 'Bánh kẹo', 'Tươi sống'];
+      const q = state.posSearch.toLowerCase().trim();
+      const filtered = state.products.filter(p => {
+        const matchCat = state.posCategory === 'Tất cả' || p.category === state.posCategory;
+        const matchQ = !q || p.name.toLowerCase().includes(q) || p.barcode.includes(q);
+        return matchCat && matchQ;
+      });
+
+      const cust = state.customers.find(c => c.id === state.selectedCustomerId);
+
+      container.innerHTML = `
+        <div class="p-3 space-y-3 ${state.cart.length > 0 ? 'pb-20' : ''}">
+          <!-- Search & Barcode Scanner -->
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input id="pos-search-input" type="text" value="${state.posSearch}" placeholder="Tìm tên SP hoặc quét mã EAN-13..."
+                class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" />
+            </div>
+            <button id="btn-scan-barcode" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+              </svg>
+              <span>Quét mã</span>
+            </button>
+          </div>
+
+          <!-- Quick Actions: Customer & Held Bills -->
+          <div class="flex items-center gap-2">
+            <button id="btn-select-customer" class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-left flex items-center justify-between shadow-sm active:bg-slate-50">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">👤</span>
+                <div class="min-w-0">
+                  <div class="text-xs font-semibold text-slate-800 truncate">${cust ? cust.name : 'Chọn khách thành viên'}</div>
+                  <div class="text-[10px] text-slate-500">${cust ? `${cust.tier} • ${cust.points} điểm` : 'Tích điểm & áp ưu đãi'}</div>
+                </div>
+              </div>
+              <span class="text-[11px] font-semibold text-emerald-600 shrink-0">${cust ? 'Đổi' : '+ Chọn'}</span>
+            </button>
+            <button id="btn-held-bills" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-1.5 shadow-sm shrink-0 active:scale-95">
+              <span>Đơn treo</span>
+              <span class="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">${state.heldBills.length}</span>
+            </button>
+          </div>
+
+          <!-- Category Pills -->
+          <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            ${categories.map(cat => `
+              <button data-cat="${cat}" class="cat-pill px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${state.posCategory === cat ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200'}">${cat}</button>
+            `).join('')}
+          </div>
+
+          <!-- Product Grid -->
+          <div class="grid grid-cols-2 gap-2.5">
+            ${filtered.length === 0 ? `<div class="col-span-2 text-center py-8 text-xs text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">Không tìm thấy sản phẩm phù hợp</div>` : filtered.map(p => {
+              const inCart = state.cart.find(c => c.id === p.id);
+              const low = p.stock <= 10;
+              return `
+                <div class="bg-white rounded-2xl p-2.5 border ${inCart ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-slate-200'} shadow-sm flex flex-col justify-between relative">
+                  ${inCart ? `<span class="absolute -top-2 -right-1.5 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">${inCart.qty}</span>` : ''}
+                  <div>
+                    <div class="flex items-start justify-between gap-1 mb-1.5">
+                      <span class="text-2xl leading-none">${p.emoji}</span>
+                      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${p.stock === 0 ? 'bg-rose-100 text-rose-700' : low ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">Tồn: ${p.stock}</span>
+                    </div>
+                    <h3 class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug mb-1">${p.name}</h3>
+                    <p class="text-[10px] text-slate-400 font-mono mb-2">${p.barcode}</p>
+                  </div>
+                  <div class="flex items-center justify-between pt-1.5 border-t border-slate-100">
+                    <div>
+                      <div class="text-xs font-bold text-emerald-700">${fmt(p.price)}</div>
+                      <div class="text-[10px] text-slate-400">/${p.unit}</div>
+                    </div>
+                    <button data-add="${p.id}" ${p.stock === 0 ? 'disabled' : ''} class="btn-add-prod w-8 h-8 rounded-xl ${p.stock === 0 ? 'bg-slate-100 text-slate-300' : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-90'} flex items-center justify-center font-bold text-base transition shadow-sm">+</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      const searchInput = document.getElementById('pos-search-input');
+      searchInput.addEventListener('input', (e) => {
+        state.posSearch = e.target.value;
+        const exact = state.products.find(p => p.barcode === state.posSearch.trim());
+        if (exact) {
+          addToCart(exact.id);
+          state.posSearch = '';
+        }
+        render();
+        const el = document.getElementById('pos-search-input');
+        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      });
+
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        btn.addEventListener('click', () => { state.posCategory = btn.dataset.cat; render(); });
+      });
+
+      document.querySelectorAll('.btn-add-prod').forEach(btn => {
+        btn.addEventListener('click', () => addToCart(btn.dataset.add));
+      });
+
+      document.getElementById('btn-scan-barcode').addEventListener('click', openScannerModal);
+      document.getElementById('btn-select-customer').addEventListener('click', openCustomerSelectModal);
+      document.getElementById('btn-held-bills').addEventListener('click', openHeldBillsModal);
+    }
+
+    function addToCart(prodId) {
+      const prod = state.products.find(p => p.id === prodId);
+      if (!prod || prod.stock <= 0) {
+        showToast('Sản phẩm đã hết hàng!', 'error');
+        return;
+      }
+      const existing = state.cart.find(c => c.id === prodId);
+      if (existing) {
+        if (existing.qty >= prod.stock) {
+          showToast(`Chỉ còn ${prod.stock} ${prod.unit} trong kho`, 'warn');
+          return;
+        }
+        existing.qty += 1;
+      } else {
+        state.cart.push({ id: prod.id, name: prod.name, price: prod.price, cost: prod.cost, qty: 1, unit: prod.unit, emoji: prod.emoji });
+      }
+      playBeep(1350, 0.06);
+      render();
+    }
+
+    function openScannerModal() {
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Quét mã vạch EAN-13 (Camera)</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="relative h-36 bg-slate-900 rounded-2xl overflow-hidden flex flex-col items-center justify-center text-white">
+            <div class="scanner-laser"></div>
+            <svg class="w-10 h-10 text-emerald-400 mb-1 opacity-80" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
+            </svg>
+            <p class="text-[11px] text-slate-300">Chạm vào mã vạch mẫu bên dưới để quét nhanh</p>
+          </div>
+          <div class="space-y-1.5 max-h-56 overflow-y-auto">
+            ${state.products.slice(0, 6).map(p => `
+              <button onclick="addToCart('${p.id}'); showToast('Đã quét: ${p.name}');" class="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:bg-emerald-50 text-left active:scale-[0.99]">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-lg">${p.emoji}</span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-semibold text-slate-800 truncate">${p.name}</div>
+                    <div class="text-[10px] font-mono text-slate-500">${p.barcode}</div>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-700 shrink-0 ml-2">${fmt(p.price)}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function openCustomerSelectModal() {
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Chọn khách hàng tích điểm</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="flex gap-2">
+            <input id="cust-modal-search" type="text" placeholder="Tìm tên hoặc SĐT..." class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button onclick="state.selectedCustomerId=null; closeModal(); render();" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold">Khách lẻ</button>
+          </div>
+          <div id="cust-modal-list" class="space-y-2 max-h-72 overflow-y-auto">
+            ${state.customers.map(c => `
+              <button onclick="state.selectedCustomerId='${c.id}'; closeModal(); render(); showToast('Đã gắn khách: ${c.name}');" class="w-full p-2.5 rounded-xl border ${state.selectedCustomerId === c.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'} flex items-center justify-between text-left">
+                <div>
+                  <div class="text-xs font-bold text-slate-800">${c.name} <span class="text-[10px] font-normal text-slate-500">(${c.phone})</span></div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">Hạng: <span class="font-semibold text-emerald-700">${c.tier}</span> • ${c.points} điểm</div>
+                </div>
+                <span class="text-xs font-bold text-emerald-600">Chọn</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `);
+      document.getElementById('cust-modal-search').addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        const list = document.getElementById('cust-modal-list');
+        const matched = state.customers.filter(c => c.name.toLowerCase().includes(val) || c.phone.includes(val));
+        list.innerHTML = matched.map(c => `
+          <button onclick="state.selectedCustomerId='${c.id}'; closeModal(); render();" class="w-full p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-left">
+            <div>
+              <div class="text-xs font-bold text-slate-800">${c.name} (${c.phone})</div>
+              <div class="text-[11px] text-slate-500">Hạng: ${c.tier} • ${c.points} điểm</div>
+            </div>
+            <span class="text-xs font-bold text-emerald-600">Chọn</span>
+          </button>
+        `).join('') || '<p class="text-center text-xs text-slate-400 py-4">Không tìm thấy khách hàng</p>';
+      });
+    }
+
+    function openHeldBillsModal() {
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Đơn hàng đang treo (${state.heldBills.length})</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            ${state.heldBills.length === 0 ? '<p class="text-center text-xs text-slate-400 py-6">Chưa có đơn hàng nào đang treo</p>' : state.heldBills.map((b, idx) => `
+              <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-slate-800">${b.customerName || 'Khách lẻ'} • ${b.time}</div>
+                  <div class="text-[11px] text-slate-500">${b.cart.reduce((s, i) => s + i.qty, 0)} sản phẩm • ${fmt(b.cart.reduce((s, i) => s + i.price * i.qty, 0))}</div>
+                </div>
+                <div class="flex gap-1.5">
+                  <button onclick="restoreHeldBill(${idx})" class="px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold">Mở lại</button>
+                  <button onclick="state.heldBills.splice(${idx},1); openHeldBillsModal(); render();" class="px-2 py-1.5 bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold">Xóa</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function restoreHeldBill(idx) {
+      const bill = state.heldBills[idx];
+      if (!bill) return;
+      state.cart = bill.cart;
+      state.selectedCustomerId = bill.customerId;
+      state.heldBills.splice(idx, 1);
+      closeModal();
+      render();
+      showToast('Đã khôi phục đơn treo!');
+    }
+
+    // ---------- CART & CHECKOUT MODAL ----------
+    document.getElementById('btn-open-cart').addEventListener('click', () => openCartModal('Tiền mặt', ''));
+
+    function openCartModal(paymentMethod = 'Tiền mặt', cashReceived = '') {
+      if (state.cart.length === 0) { closeModal(); return; }
+      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer } = calcCartTotals();
+      const cashNum = cashReceived === '' ? total : Number(cashReceived);
+      const change = Math.max(0, cashNum - total);
+
+      openModal(`
+        <div class="flex flex-col max-h-[90vh]">
+          <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900">Thanh toán đơn hàng</h3>
+              <p class="text-[11px] text-slate-500">${customer ? `Khách: ${customer.name} (${customer.points} điểm)` : 'Khách lẻ'}</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="holdCurrentBill()" class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-semibold">Treo đơn</button>
+              <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-3 overflow-y-auto flex-1">
+            <!-- Cart Items -->
+            <div class="space-y-2">
+              ${state.cart.map((item, idx) => `
+                <div class="flex items-center justify-between gap-2 bg-white p-2 rounded-xl border border-slate-100">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-lg">${item.emoji}</span>
+                    <div class="min-w-0">
+                      <div class="text-xs font-semibold text-slate-800 truncate">${item.name}</div>
+                      <div class="text-[11px] text-emerald-700 font-semibold">${fmt(item.price)}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="updateCartQty(${idx}, -1, '${paymentMethod}')" class="w-7 h-7 rounded-lg bg-slate-100 font-bold text-slate-700">-</button>
+                    <span class="text-xs font-bold w-5 text-center">${item.qty}</span>
+                    <button onclick="updateCartQty(${idx}, 1, '${paymentMethod}')" class="w-7 h-7 rounded-lg bg-emerald-100 font-bold text-emerald-700">+</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Promo & Points -->
+            <div class="bg-slate-50 p-3 rounded-xl space-y-2 border border-slate-200">
+              <div class="flex gap-1.5">
+                <input id="promo-input" type="text" value="${state.promoCode}" placeholder="Mã giảm giá (GIAM10, SIEUTHI20K, VIP50K)" class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs uppercase" />
+                <button onclick="applyPromo('${paymentMethod}')" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold">Áp dụng</button>
+              </div>
+              ${customer ? `
+                <label class="flex items-center justify-between text-xs pt-1 cursor-pointer">
+                  <span class="text-slate-700 font-medium">Dùng điểm thưởng (Có <b class="text-emerald-700">${customer.points}đ</b> = ${fmt(customer.points * 100)})</span>
+                  <input type="checkbox" ${state.usePoints ? 'checked' : ''} onchange="state.usePoints=this.checked; openCartModal('${paymentMethod}');" class="w-4 h-4 accent-emerald-600" />
+                </label>
+              ` : ''}
+            </div>
+
+            <!-- Summary -->
+            <div class="space-y-1 text-xs bg-white p-3 rounded-xl border border-slate-200">
+              <div class="flex justify-between text-slate-500"><span>Tạm tính:</span><span>${fmt(subtotal)}</span></div>
+              ${promoDiscount > 0 ? `<div class="flex justify-between text-emerald-600"><span>Giảm giá mã KM:</span><span>-${fmt(promoDiscount)}</span></div>` : ''}
+              ${pointsDiscount > 0 ? `<div class="flex justify-between text-amber-600"><span>Trừ điểm (${pointsUsed} điểm):</span><span>-${fmt(pointsDiscount)}</span></div>` : ''}
+              <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1.5 border-t border-slate-100">
+                <span>Tổng thanh toán:</span>
+                <span class="text-emerald-700">${fmt(total)}</span>
+              </div>
+              ${customer ? `<div class="text-[11px] text-emerald-600 text-right">+${pointsEarned} điểm tích lũy sau đơn này</div>` : ''}
+            </div>
+
+            <!-- Payment Method -->
+            <div class="space-y-2">
+              <div class="text-xs font-bold text-slate-700">Phương thức thanh toán</div>
+              <div class="grid grid-cols-3 gap-2">
+                ${['Tiền mặt', 'VietQR', 'Thẻ / Ví'].map(m => `
+                  <button onclick="openCartModal('${m}')" class="py-2 rounded-xl text-xs font-semibold border transition ${paymentMethod === m ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200'}">${m}</button>
+                `).join('')}
+              </div>
+
+              ${paymentMethod === 'Tiền mặt' ? `
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-slate-600">Khách đưa:</span>
+                    <input id="cash-input" type="number" value="${cashReceived === '' ? total : cashReceived}" oninput="updateChangeDisplay(${total})" class="w-36 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-right" />
+                  </div>
+                  <div class="flex gap-1.5 flex-wrap">
+                    ${[total, 100000, 200000, 500000].map(v => `
+                      <button onclick="openCartModal('Tiền mặt', ${v})" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-medium">${fmt(v)}</button>
+                    `).join('')}
+                  </div>
+                  <div class="flex justify-between text-xs font-bold text-slate-800 pt-1 border-t border-slate-200">
+                    <span>Tiền thối lại:</span>
+                    <span id="change-display" class="text-rose-600">${fmt(change)}</span>
+                  </div>
+                </div>
+              ` : paymentMethod === 'VietQR' ? `
+                <div class="bg-white p-3 rounded-xl border border-emerald-200 flex items-center gap-3">
+                  <div class="w-20 h-20 bg-slate-900 rounded-xl p-1.5 shrink-0 flex items-center justify-center">
+                    <svg viewBox="0 0 36 36" class="w-full h-full text-white" fill="currentColor">
+                      <rect x="2" y="2" width="10" height="10" rx="1"/><rect x="4" y="4" width="6" height="6" fill="#0f172a"/><rect x="6" y="6" width="2" height="2"/>
+                      <rect x="24" y="2" width="10" height="10" rx="1"/><rect x="26" y="4" width="6" height="6" fill="#0f172a"/><rect x="28" y="6" width="2" height="2"/>
+                      <rect x="2" y="24" width="10" height="10" rx="1"/><rect x="4" y="26" width="6" height="6" fill="#0f172a"/><rect x="6" y="28" width="2" height="2"/>
+                      <rect x="15" y="4" width="3" height="3"/><rect x="15" y="10" width="6" height="3"/><rect x="15" y="16" width="3" height="6"/><rect x="21" y="16" width="6" height="3"/><rect x="24" y="24" width="4" height="4"/><rect x="30" y="28" width="4" height="6"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs space-y-0.5">
+                    <div class="font-bold text-emerald-700">VietQR • SmartMart</div>
+                    <div class="text-slate-600">Số tiền: <b class="text-slate-900">${fmt(total)}</b></div>
+                    <div class="text-[11px] text-slate-400">Tự động xác nhận khi khách quét</div>
+                  </div>
+                </div>
+              ` : `
+                <div class="bg-blue-50 p-2.5 rounded-xl border border-blue-200 text-xs text-blue-800">
+                  Kết nối máy POS quẹt thẻ / Ví MoMo, ZaloPay: <b>${fmt(total)}</b>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="p-3 border-t border-slate-200 bg-white">
+            <button onclick="completeCheckout('${paymentMethod}')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl shadow-md active:scale-[0.99] transition">
+              Xác nhận Thanh toán • ${fmt(total)}
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function updateChangeDisplay(total) {
+      const val = Number(document.getElementById('cash-input')?.value || 0);
+      const disp = document.getElementById('change-display');
+      if (disp) disp.textContent = fmt(Math.max(0, val - total));
+    }
+
+    function updateCartQty(idx, delta, method) {
+      const item = state.cart[idx];
+      if (!item) return;
+      const prod = state.products.find(p => p.id === item.id);
+      const next = item.qty + delta;
+      if (next <= 0) state.cart.splice(idx, 1);
+      else if (prod && next > prod.stock) { showToast(`Kho chỉ còn ${prod.stock}`, 'warn'); return; }
+      else item.qty = next;
+      render();
+      openCartModal(method);
+    }
+
+    function applyPromo(method) {
+      const val = document.getElementById('promo-input')?.value || '';
+      state.promoCode = val.trim().toUpperCase();
+      const { promoDiscount } = calcCartTotals();
+      if (state.promoCode && promoDiscount === 0) showToast('Mã chưa hợp lệ hoặc chưa đạt giá trị tối thiểu', 'warn');
+      else if (promoDiscount > 0) showToast(`Đã giảm ${fmt(promoDiscount)}!`);
+      openCartModal(method);
+    }
+
+    function holdCurrentBill() {
+      const cust = state.customers.find(c => c.id === state.selectedCustomerId);
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 5);
+      state.heldBills.push({
+        time,
+        customerId: state.selectedCustomerId,
+        customerName: cust ? cust.name : 'Khách lẻ',
+        cart: JSON.parse(JSON.stringify(state.cart))
+      });
+      state.cart = [];
+      state.selectedCustomerId = null;
+      state.promoCode = '';
+      state.usePoints = false;
+      closeModal();
+      render();
+      showToast('Đã treo đơn hàng tạm thời!');
+    }
+
+    function completeCheckout(method) {
+      const { subtotal, promoDiscount, pointsUsed, pointsDiscount, total, pointsEarned, customer } = calcCartTotals();
+      state.cart.forEach(ci => {
+        const p = state.products.find(pr => pr.id === ci.id);
+        if (p) p.stock = Math.max(0, p.stock - ci.qty);
+      });
+      if (customer) {
+        customer.points = Math.max(0, customer.points - pointsUsed) + pointsEarned;
+        customer.totalSpent += total;
+        customer.visits += 1;
+        customer.lastVisit = '2026-11-15';
+        if (customer.totalSpent >= 15000000) customer.tier = 'Kim Cương';
+        else if (customer.totalSpent >= 7000000) customer.tier = 'Vàng';
+        else if (customer.totalSpent >= 3000000) customer.tier = 'Bạc';
+      }
+
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 5);
+      const orderId = `HD-261115-${String(state.orders.length + 1).padStart(2, '0')}`;
+      const newOrder = {
+        id: orderId,
+        time,
+        branch: state.shift.branch,
+        cashier: state.shift.cashier,
+        customerId: customer ? customer.id : null,
+        customerName: customer ? customer.name : 'Khách lẻ',
+        items: JSON.parse(JSON.stringify(state.cart)),
+        subtotal,
+        discount: promoDiscount + pointsDiscount,
+        pointsUsed,
+        total,
+        pointsEarned,
+        method,
+        status: 'Hoàn thành'
+      };
+      state.orders.unshift(newOrder);
+
+      if (promoDiscount > 0) {
+        state.auditLogs.unshift({
+          id: 'AL' + Date.now(),
+          time,
+          branch: state.shift.branch,
+          staff: state.shift.cashier,
+          action: `Áp dụng mã ${state.promoCode}`,
+          detail: `Giảm ${fmt(promoDiscount)} cho ${orderId}`,
+          level: 'warn'
+        });
+      }
+
+      state.cart = [];
+      state.selectedCustomerId = null;
+      state.promoCode = '';
+      state.usePoints = false;
+      playBeep(1600, 0.12);
+      render();
+      openReceiptModal(newOrder);
+    }
+
+    function openReceiptModal(order) {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">✓ Thanh toán thành công</span>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="k80-receipt p-3.5 rounded-xl text-[11px] text-slate-800 space-y-2">
+            <div class="text-center border-b border-dashed border-slate-300 pb-2">
+              <div class="font-bold text-sm">SIÊU THỊ SMARTMART</div>
+              <div>${order.branch} • ĐT: 0276.3888.999</div>
+              <div class="font-bold mt-1">HÓA ĐƠN BÁN LẺ (K80)</div>
+              <div>Số: ${order.id} • ${order.time} 15/11/2026</div>
+              <div>Thu ngân: ${order.cashier}</div>
+              <div>Khách: ${order.customerName}</div>
+            </div>
+            <div class="space-y-1 border-b border-dashed border-slate-300 pb-2">
+              ${order.items.map(i => `
+                <div class="flex justify-between gap-2">
+                  <span class="truncate flex-1">${i.name} x${i.qty}</span>
+                  <span class="font-semibold">${fmt(i.price * i.qty)}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="space-y-0.5">
+              <div class="flex justify-between"><span>Tạm tính:</span><span>${fmt(order.subtotal)}</span></div>
+              ${order.discount > 0 ? `<div class="flex justify-between"><span>Giảm giá/Điểm:</span><span>-${fmt(order.discount)}</span></div>` : ''}
+              <div class="flex justify-between font-bold text-sm pt-1"><span>THÀNH TIỀN:</span><span>${fmt(order.total)}</span></div>
+              <div class="flex justify-between text-[10px]"><span>Thanh toán (${order.method}):</span><span>${fmt(order.total)}</span></div>
+              ${order.pointsEarned > 0 ? `<div class="text-center font-semibold pt-1">Điểm tích lũy cộng thêm: +${order.pointsEarned} điểm</div>` : ''}
+            </div>
+            <div class="text-center text-[10px] text-slate-500 pt-2 border-t border-dashed border-slate-300">
+              Cảm ơn Quý khách! Hẹn gặp lại!
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="showToast('Đã gửi lệnh in máy in nhiệt K80!');" class="py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">🖨️ In hóa đơn K80</button>
+            <button onclick="closeModal()" class="py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Đơn hàng mới</button>
+          </div>
+        </div>
+      `);
+    }
+
+    // ---------- TAB 2: CRM & LOYALTY ----------
+    function renderCRM(container) {
+      const sub = state.crmSubTab;
+      container.innerHTML = `
+        <div class="p-3 space-y-3">
+          <div class="grid grid-cols-3 gap-1.5 bg-slate-200/70 p-1 rounded-xl">
+            <button data-crm="list" class="crm-sub-btn py-2 rounded-lg text-xs font-semibold transition ${sub === 'list' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Khách hàng</button>
+            <button data-crm="gifts" class="crm-sub-btn py-2 rounded-lg text-xs font-semibold transition ${sub === 'gifts' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Đổi quà</button>
+            <button data-crm="care" class="crm-sub-btn py-2 rounded-lg text-xs font-semibold transition ${sub === 'care' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}">Chăm sóc</button>
+          </div>
+          <div id="crm-body"></div>
+        </div>
+      `;
+
+      document.querySelectorAll('.crm-sub-btn').forEach(b => {
+        b.addEventListener('click', () => { state.crmSubTab = b.dataset.crm; render(); });
+      });
+
+      const body = document.getElementById('crm-body');
+      if (sub === 'list') {
+        body.innerHTML = `
+          <div class="space-y-2.5">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-slate-700">Tổng ${state.customers.length} hội viên</span>
+              <button id="btn-new-customer" class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold shadow-sm">+ Thêm hội viên</button>
+            </div>
+            ${state.customers.map(c => `
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm font-bold text-slate-900">${c.name}</span>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTierBadge(c.tier)}">${c.tier}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-0.5">${c.phone} • ${c.visits} lượt mua</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-extrabold text-amber-600">${c.points} điểm</div>
+                    <div class="text-[10px] text-slate-400">Chi: ${fmt(c.totalSpent)}</div>
+                  </div>
+                </div>
+                <div class="text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-lg">${c.note || 'Chưa có ghi chú'}</div>
+                <div class="flex gap-2 pt-1">
+                  <button onclick="state.selectedCustomerId='${c.id}'; state.activeTab='pos'; render(); showToast('Đã chọn ${c.name} vào quầy POS');" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold">Bán hàng</button>
+                  <button onclick="state.selectedCustomerId='${c.id}'; state.crmSubTab='gifts'; render();" class="flex-1 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold">Đổi quà</button>
+                  <button onclick="openCareMessageModal('${c.id}')" class="flex-1 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">Gửi Zalo</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        document.getElementById('btn-new-customer').addEventListener('click', openAddCustomerModal);
+      } else if (sub === 'gifts') {
+        const selCust = state.customers.find(c => c.id === state.selectedCustomerId) || state.customers[0];
+        body.innerHTML = `
+          <div class="space-y-3">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3.5 rounded-2xl shadow-sm">
+              <div class="text-[11px] opacity-90 mb-1">Khách hàng đang đổi quà:</div>
+              <div class="flex items-center justify-between gap-2">
+                <select id="gift-cust-select" class="bg-white/20 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/30 focus:outline-none">
+                  ${state.customers.map(c => `<option value="${c.id}" class="text-slate-900" ${selCust.id === c.id ? 'selected' : ''}>${c.name} (${c.points} điểm)</option>`).join('')}
+                </select>
+                <div class="text-right">
+                  <div class="text-lg font-extrabold">${selCust.points} điểm</div>
+                  <div class="text-[10px] opacity-90">Hạng ${selCust.tier}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2.5">
+              ${state.gifts.map(g => {
+                const canRedeem = selCust.points >= g.pointsCost && g.stock > 0;
+                return `
+                  <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center text-2xl shrink-0">${g.emoji}</div>
+                      <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-900 truncate">${g.name}</div>
+                        <div class="text-[11px] text-slate-500">${g.valueText} • Còn ${g.stock}</div>
+                        <div class="text-xs font-extrabold text-amber-600 mt-0.5">${g.pointsCost} điểm</div>
+                      </div>
+                    </div>
+                    <button onclick="redeemGift('${selCust.id}', '${g.id}')" ${!canRedeem ? 'disabled' : ''} class="px-3 py-2 rounded-xl text-xs font-bold shrink-0 ${canRedeem ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95' : 'bg-slate-100 text-slate-400'}">
+                      Đổi ngay
+                    </button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            ${state.redemptions.length > 0 ? `
+              <div class="bg-white p-3 rounded-2xl border border-slate-200">
+                <div class="text-xs font-bold text-slate-800 mb-2">Lịch sử đổi quà gần đây</div>
+                <div class="space-y-1.5">
+                  ${state.redemptions.slice(0, 5).map(r => `
+                    <div class="flex justify-between text-[11px] text-slate-600 border-b border-slate-100 pb-1">
+                      <span><b>${r.customerName}</b> đổi ${r.giftName}</span>
+                      <span class="text-amber-600 font-semibold">-${r.points}đ (${r.time})</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        document.getElementById('gift-cust-select').addEventListener('change', (e) => {
+          state.selectedCustomerId = e.target.value;
+          render();
+        });
+      } else {
+        body.innerHTML = `
+          <div class="space-y-3">
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl">
+              <div class="text-xs font-bold text-blue-900">Chiến dịch Chăm sóc tự động hôm nay</div>
+              <div class="text-[11px] text-blue-700 mt-0.5">Phát hiện khách sinh nhật & khách lâu chưa quay lại để gửi ưu đãi 1 chạm.</div>
+            </div>
+            ${state.customers.filter(c => !c.cared).map(c => `
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900">${c.name} <span class="text-[10px] font-normal text-slate-500">(${c.tier})</span></div>
+                  <div class="text-[11px] text-slate-600 truncate">${c.note}</div>
+                </div>
+                <button onclick="openCareMessageModal('${c.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold shrink-0">Gửi chăm sóc</button>
+              </div>
+            `).join('') || '<p class="text-center text-xs text-emerald-600 py-4 font-semibold">✓ Đã chăm sóc hết danh sách hôm nay!</p>'}
+
+            <div class="bg-white p-3 rounded-2xl border border-slate-200">
+              <div class="text-xs font-bold text-slate-800 mb-2">Nhật ký chăm sóc đã gửi</div>
+              <div class="space-y-2">
+                ${state.careLogs.map(l => `
+                  <div class="text-[11px] bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div class="flex justify-between font-semibold text-slate-800">
+                      <span>${l.customerName} (${l.channel})</span>
+                      <span class="text-slate-400">${l.time}</span>
+                    </div>
+                    <div class="text-slate-600 mt-0.5">${l.message}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function redeemGift(custId, giftId) {
+      const cust = state.customers.find(c => c.id === custId);
+      const gift = state.gifts.find(g => g.id === giftId);
+      if (!cust || !gift || cust.points < gift.pointsCost || gift.stock <= 0) return;
+      cust.points -= gift.pointsCost;
+      gift.stock -= 1;
+      const time = new Date().toTimeString().slice(0, 5);
+      state.redemptions.unshift({ customerName: cust.name, giftName: gift.name, points: gift.pointsCost, time });
+      playBeep(1500, 0.1);
+      render();
+      showToast(`Đổi thành công "${gift.name}" cho ${cust.name}!`);
+    }
+
+    function openAddCustomerModal() {
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Thêm hội viên mới</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="space-y-2">
+            <input id="nc-name" type="text" placeholder="Họ và tên khách hàng" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <input id="nc-phone" type="tel" placeholder="Số điện thoại (VD: 0909123456)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <input id="nc-note" type="text" placeholder="Ghi chú sở thích / thói quen mua sắm" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+          </div>
+          <button onclick="submitNewCustomer()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu hội viên (+50 điểm chào mừng)</button>
+        </div>
+      `);
+    }
+
+    function submitNewCustomer() {
+      const name = document.getElementById('nc-name').value.trim();
+      const phone = document.getElementById('nc-phone').value.trim();
+      const note = document.getElementById('nc-note').value.trim();
+      if (!name || !phone) { showToast('Vui lòng nhập tên và SĐT', 'warn'); return; }
+      state.customers.unshift({
+        id: 'C' + Date.now(),
+        name, phone, tier: 'Thành viên', points: 50, totalSpent: 0, visits: 0,
+        birthday: '1995-01-01', lastVisit: '2026-11-15', note: note || 'Khách hàng mới', cared: false
+      });
+      closeModal();
+      render();
+      showToast(`Đã thêm hội viên ${name} (+50 điểm)!`);
+    }
+
+    function openCareMessageModal(custId) {
+      const c = state.customers.find(x => x.id === custId);
+      if (!c) return;
+      const defaultMsg = `Chào ${c.name}, SmartMart gửi tặng bạn mã VIP50K (giảm 50.000đ đơn từ 300k). Bạn hiện có ${c.points} điểm thưởng có thể đổi quà ngay tại quầy!`;
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Gửi tin nhắn Chăm sóc (${c.name})</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <select id="care-channel" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold">
+            <option value="Zalo OA">Zalo OA Doanh nghiệp</option>
+            <option value="SMS Brandname">SMS Brandname SmartMart</option>
+          </select>
+          <textarea id="care-msg" rows="4" class="w-full p-3 border border-slate-200 rounded-xl text-xs">${defaultMsg}</textarea>
+          <button onclick="sendCareMsg('${c.id}')" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold">Gửi ngay cho khách</button>
+        </div>
+      `);
+    }
+
+    function sendCareMsg(custId) {
+      const c = state.customers.find(x => x.id === custId);
+      const channel = document.getElementById('care-channel').value;
+      const message = document.getElementById('care-msg').value.trim();
+      if (!c || !message) return;
+      c.cared = true;
+      state.careLogs.unshift({ id: 'CL' + Date.now(), time: new Date().toTimeString().slice(0, 5), customerName: c.name, channel, message });
+      closeModal();
+      render();
+      showToast(`Đã gửi ${channel} chăm sóc ${c.name}!`);
+    }
+
+    // ---------- TAB 3: INVENTORY ----------
+    function renderInventory(container) {
+      const lowCount = state.products.filter(p => p.stock <= 10).length;
+      const totalVal = state.products.reduce((s, p) => s + p.stock * p.cost, 0);
+      const q = state.invSearch.toLowerCase().trim();
+      const filtered = state.products.filter(p => {
+        const matchF = state.invFilter === 'all' || (state.invFilter === 'low' && p.stock <= 10);
+        const matchQ = !q || p.name.toLowerCase().includes(q) || p.barcode.includes(q);
+        return matchF && matchQ;
+      });
+
+      container.innerHTML = `
+        <div class="p-3 space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-white p-2.5 rounded-2xl border border-slate-200">
+              <div class="text-[10px] text-slate-500">Tổng mã SP</div>
+              <div class="text-base font-extrabold text-slate-900">${state.products.length}</div>
+            </div>
+            <button onclick="state.invFilter = state.invFilter === 'low' ? 'all' : 'low'; render();" class="text-left p-2.5 rounded-2xl border ${state.invFilter === 'low' ? 'bg-amber-50 border-amber-400' : 'bg-white border-slate-200'}">
+              <div class="text-[10px] text-amber-700 font-semibold">Sắp hết (≤10)</div>
+              <div class="text-base font-extrabold text-amber-600">${lowCount}</div>
+            </button>
+            <div class="bg-white p-2.5 rounded-2xl border border-slate-200">
+              <div class="text-[10px] text-slate-500">Vốn tồn kho</div>
+              <div class="text-xs font-extrabold text-emerald-700 mt-1">${(totalVal / 1000000).toFixed(1)}tr</div>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <input id="inv-search-input" type="text" value="${state.invSearch}" placeholder="Tìm sản phẩm trong kho..." class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs" />
+            <button onclick="openAddProductModal()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shrink-0">+ Thêm SP</button>
+          </div>
+
+          <div class="space-y-2">
+            ${filtered.map(p => `
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="text-2xl">${p.emoji}</span>
+                  <div class="min-w-0">
+                    <div class="text-xs font-bold text-slate-800 truncate">${p.name}</div>
+                    <div class="text-[11px] text-slate-500">Giá bán: ${fmt(p.price)} • Vốn: ${fmt(p.cost)}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-xs font-extrabold px-2 py-1 rounded-lg ${p.stock <= 10 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}">${p.stock} ${p.unit}</span>
+                  <button onclick="openStockInModal('${p.id}')" class="px-2.5 py-1.5 bg-slate-900 text-white rounded-lg text-[11px] font-semibold">+ Nhập</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('inv-search-input').addEventListener('input', (e) => {
+        state.invSearch = e.target.value;
+        render();
+        const el = document.getElementById('inv-search-input');
+        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      });
+    }
+
+    function openStockInModal(prodId) {
+      const p = state.products.find(x => x.id === prodId);
+      if (!p) return;
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Nhập kho: ${p.name}</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="text-xs text-slate-500">Tồn hiện tại: <b>${p.stock} ${p.unit}</b></div>
+          <input id="si-qty" type="number" value="20" min="1" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold" />
+          <button onclick="confirmStockIn('${p.id}')" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Xác nhận nhập kho</button>
+        </div>
+      `);
+    }
+
+    function confirmStockIn(prodId) {
+      const qty = Number(document.getElementById('si-qty').value || 0);
+      const p = state.products.find(x => x.id === prodId);
+      if (!p || qty <= 0) return;
+      p.stock += qty;
+      closeModal();
+      render();
+      showToast(`Đã nhập +${qty} ${p.unit} ${p.name}`);
+    }
+
+    function openAddProductModal() {
+      openModal(`
+        <div class="p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm">Thêm sản phẩm mới</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="space-y-2">
+            <input id="np-name" type="text" placeholder="Tên sản phẩm" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <input id="np-barcode" type="text" placeholder="Mã vạch EAN-13 (tự tạo nếu để trống)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <div class="grid grid-cols-2 gap-2">
+              <input id="np-price" type="number" placeholder="Giá bán (đ)" class="px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+              <input id="np-stock" type="number" placeholder="Tồn đầu" value="20" class="px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+          </div>
+          <button onclick="confirmAddProduct()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu sản phẩm</button>
+        </div>
+      `);
+    }
+
+    function confirmAddProduct() {
+      const name = document.getElementById('np-name').value.trim();
+      const price = Number(document.getElementById('np-price').value || 0);
+      const stock = Number(document.getElementById('np-stock').value || 0);
+      const barcode = document.getElementById('np-barcode').value.trim() || ('893' + Math.floor(1000000000 + Math.random() * 8999999999));
+      if (!name || price <= 0) { showToast('Nhập tên và giá bán hợp lệ', 'warn'); return; }
+      state.products.unshift({ id: 'P' + Date.now(), barcode, name, category: 'Thực phẩm', price, cost: Math.round(price * 0.8), stock, unit: 'Cái', emoji: '📦' });
+      closeModal();
+      render();
+      showToast(`Đã thêm ${name}`);
+    }
+
+    // ---------- TAB 4: ORDERS & Z-REPORT ----------
+    function renderOrders(container) {
+      const cashSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'Tiền mặt').reduce((s, o) => s + o.total, 0);
+      const qrSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'VietQR').reduce((s, o) => s + o.total, 0);
+      const cardSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'Thẻ / Ví').reduce((s, o) => s + o.total, 0);
+      const expectedDrawer = state.shift.openingCash + cashSales;
+
+      container.innerHTML = `
+        <div class="p-3 space-y-3">
+          <!-- Z-Report Card -->
+          <div class="bg-slate-900 text-white p-4 rounded-2xl shadow-md space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-[11px] text-slate-400">Báo cáo Ca hiện tại (${state.shift.id})</div>
+                <div class="text-sm font-bold">Thu ngân: ${state.shift.cashier} • Từ ${state.shift.startTime}</div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${state.shift.closed ? 'bg-slate-700 text-slate-300' : 'bg-emerald-500 text-white'}">${state.shift.closed ? 'Đã chốt ca' : 'Đang mở ca'}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-800">
+              <div><span class="text-slate-400">Đầu ca:</span> <b>${fmt(state.shift.openingCash)}</b></div>
+              <div><span class="text-slate-400">Tiền mặt:</span> <b class="text-emerald-400">${fmt(cashSales)}</b></div>
+              <div><span class="text-slate-400">VietQR:</span> <b>${fmt(qrSales)}</b></div>
+              <div><span class="text-slate-400">Thẻ / Ví:</span> <b>${fmt(cardSales)}</b></div>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+              <div>
+                <div class="text-[10px] text-slate-400">Tiền mặt dự kiến trong két</div>
+                <div class="text-base font-extrabold text-amber-400">${fmt(expectedDrawer)}</div>
+              </div>
+              <button onclick="state.shift.closed = !state.shift.closed; render(); showToast(state.shift.closed ? 'Đã chốt ca & xuất Z-Report!' : 'Đã mở lại ca');" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold">
+                ${state.shift.closed ? 'Mở lại ca' : 'Chốt ca (Z-Report)'}
+              </button>
+            </div>
+          </div>
+
+          <!-- Order List -->
+          <div class="text-xs font-bold text-slate-700">Lịch sử hóa đơn (${state.orders.length})</div>
+          <div class="space-y-2">
+            ${state.orders.map((o, idx) => `
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-900">${o.id} <span class="text-[10px] font-normal text-slate-500">• ${o.time}</span></span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${o.status === 'Hoàn thành' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${o.status}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-600">${o.customerName} • ${o.method}</span>
+                  <span class="font-extrabold text-slate-900">${fmt(o.total)}</span>
+                </div>
+                <div class="flex gap-2 pt-1">
+                  <button onclick="openReceiptByIndex(${idx})" class="flex-1 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold">Xem K80</button>
+                  ${o.status === 'Hoàn thành' ? `<button onclick="refundOrder('${o.id}')" class="flex-1 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-[11px] font-semibold">Hoàn trả hàng</button>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function openReceiptByIndex(idx) {
+      const o = state.orders[idx];
+      if (o) openReceiptModal(o);
+    }
+
+    function refundOrder(orderId) {
+      const o = state.orders.find(x => x.id === orderId);
+      if (!o || o.status !== 'Hoàn thành') return;
+      o.status = 'Đã hoàn trả';
+      o.items.forEach(i => {
+        const p = state.products.find(pr => pr.id === i.id);
+        if (p) p.stock += i.qty;
+      });
+      if (o.customerId) {
+        const c = state.customers.find(cu => cu.id === o.customerId);
+        if (c) c.points = Math.max(0, c.points - o.pointsEarned);
+      }
+      state.auditLogs.unshift({
+        id: 'AL' + Date.now(),
+        time: new Date().toTimeString().slice(0, 5),
+        branch: o.branch,
+        staff: state.shift.cashier,
+        action: `Hoàn trả ${o.id}`,
+        detail: `Hoàn ${fmt(o.total)} & nhập lại kho`,
+        level: 'danger'
+      });
+      render();
+      showToast(`Đã hoàn trả ${orderId} và cộng lại tồn kho!`);
+    }
+
+    // ---------- TAB 5: REMOTE OWNER DASHBOARD ----------
+    function renderOwner(container) {
+      const branchOrders = state.orders.filter(o => o.status === 'Hoàn thành' && (state.ownerBranch === 'Tất cả chi nhánh' || o.branch === state.ownerBranch));
+      const revenue = branchOrders.reduce((s, o) => s + o.total, 0);
+      const costTotal = branchOrders.reduce((s, o) => s + o.items.reduce((si, i) => si + (i.cost || i.price * 0.8) * i.qty, 0), 0);
+      const profit = Math.max(0, revenue - costTotal);
+      const avgBasket = branchOrders.length > 0 ? Math.round(revenue / branchOrders.length) : 0;
+      const lowStockItems = state.products.filter(p => p.stock <= 10);
+
+      container.innerHTML = `
+        <div class="p-3 space-y-3">
+          <!-- Remote Filter Bar -->
+          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <select id="owner-branch-select" class="flex-1 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2">
+                <option ${state.ownerBranch === 'Tất cả chi nhánh' ? 'selected' : ''}>Tất cả chi nhánh</option>
+                <option ${state.ownerBranch === 'CN1 - Trảng Bàng' ? 'selected' : ''}>CN1 - Trảng Bàng</option>
+                <option ${state.ownerBranch === 'CN2 - Gò Dầu' ? 'selected' : ''}>CN2 - Gò Dầu</option>
+              </select>
+              <button onclick="cloudConfig.enabled ? pullFromCloud(false) : openCloudSyncModal();" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold shrink-0 active:scale-95">↻ Đồng bộ</button>
+            </div>
+            <button onclick="openCloudSyncModal()" class="w-full flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl ${cloudConfig.enabled && getCloudEndpoint() ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}">
+              <span>${cloudConfig.enabled && getCloudEndpoint() ? `☁️ Đang đồng bộ mã: <b>${cloudConfig.storeId}</b> (${cloudConfig.lastSync || 'vừa xong'})` : '⚠️ Chưa bật Đồng bộ Đám mây — Chạm để kết nối máy nhân viên'}</span>
+              <span class="font-bold underline">Cài đặt</span>
+            </button>
+          </div>
+
+          <!-- KPI 2x2 -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-3 rounded-2xl shadow-sm">
+              <div class="text-[11px] text-emerald-100">Doanh thu thuần</div>
+              <div class="text-lg font-extrabold mt-0.5">${fmt(revenue)}</div>
+              <div class="text-[10px] text-emerald-200 mt-1">Cập nhật theo thời gian thực</div>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-[11px] text-slate-500">Lợi nhuận gộp (ước tính)</div>
+              <div class="text-lg font-extrabold text-emerald-700 mt-0.5">${fmt(profit)}</div>
+              <div class="text-[10px] text-slate-400 mt-1">Biên LN: ${revenue > 0 ? Math.round((profit / revenue) * 100) : 0}%</div>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-[11px] text-slate-500">Số đơn hàng</div>
+              <div class="text-base font-extrabold text-slate-900">${branchOrders.length} đơn</div>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-[11px] text-slate-500">Giá trị TB / đơn</div>
+              <div class="text-base font-extrabold text-slate-900">${fmt(avgBasket)}</div>
+            </div>
+          </div>
+
+          <!-- Revenue Chart -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xs font-bold text-slate-800">Biểu đồ doanh thu theo khung giờ</h3>
+              <span class="text-[10px] text-emerald-600 font-semibold">Hôm nay</span>
+            </div>
+            <div class="relative h-48">
+              <canvas id="owner-revenue-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Remote Staff & Audit Monitor -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-slate-800">Giám sát quầy & Nhật ký nhạy cảm</h3>
+              <span class="text-[10px] bg-rose-50 text-rose-700 font-semibold px-2 py-0.5 rounded-full">Chống thất thoát</span>
+            </div>
+            <div class="space-y-1.5">
+              ${state.auditLogs.slice(0, 5).map(a => `
+                <div class="flex items-start justify-between gap-2 text-[11px] p-2 rounded-xl ${a.level === 'danger' ? 'bg-rose-50 text-rose-900' : a.level === 'warn' ? 'bg-amber-50 text-amber-900' : 'bg-slate-50 text-slate-700'}">
+                  <div>
+                    <div class="font-bold">${a.action} • ${a.staff}</div>
+                    <div class="opacity-80">${a.detail} (${a.branch})</div>
+                  </div>
+                  <span class="text-[10px] opacity-70 shrink-0">${a.time}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Low Stock Alert -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-slate-800">Cảnh báo tồn kho từ xa (${lowStockItems.length})</h3>
+              <button onclick="state.activeTab='inventory'; state.invFilter='low'; render();" class="text-[11px] font-semibold text-emerald-600">Xử lý nhập kho →</button>
+            </div>
+            <div class="space-y-1.5">
+              ${lowStockItems.map(p => `
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                  <span class="truncate text-slate-700">${p.emoji} ${p.name}</span>
+                  <span class="font-bold text-rose-600 shrink-0 ml-2">Còn ${p.stock} ${p.unit}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('owner-branch-select').addEventListener('change', (e) => {
+        state.ownerBranch = e.target.value;
+        render();
+      });
+
+      const ctx = document.getElementById('owner-revenue-chart').getContext('2d');
+      if (ownerChartInstance) ownerChartInstance.destroy();
+      const hours = ['08h', '09h', '10h', '11h', '12h', '13h', '14h'];
+      const hourlyData = hours.map(h => {
+        const prefix = h.slice(0, 2);
+        return branchOrders.filter(o => o.time.startsWith(prefix)).reduce((s, o) => s + o.total, 0);
+      });
+      if (typeof Chart === 'undefined') {
+        const box = document.getElementById('owner-revenue-chart').parentElement;
+        const maxVal = Math.max(1, ...hourlyData);
+        box.innerHTML = `<div class="h-full flex items-end justify-between gap-2 pt-4 pb-1 px-1">` +
+          hours.map((h, i) => `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div class="w-full bg-emerald-500 rounded-t" style="height:${Math.max(4, Math.round((hourlyData[i]/maxVal)*100))}%"></div>
+            <span class="text-[10px] text-slate-500">${h}</span>
+          </div>`).join('') + `</div>`;
+        return;
+      }
+      ownerChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [{
+            label: 'Doanh thu (đ)',
+            data: hourlyData,
+            backgroundColor: '#10b981',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { size: 10 },
+                callback: (v) => (v >= 1000 ? (v / 1000) + 'k' : v)
+              }
             },
-            subscribeStore(storeId) {
-                if (!this.db || !this.user || !storeId) {
-                    updateCloudIndicator('LOCAL');
-                    return;
-                }
-                if (this.unsubscribe) this.unsubscribe();
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'smartmart-pos';
-                const storeRef = doc(this.db, 'artifacts', appId, 'public', 'data', 'stores', storeId);
-
-                updateCloudIndicator('SYNCING');
-                this.unsubscribe = onSnapshot(storeRef, (snap) => {
-                    updateCloudIndicator('LIVE');
-                    if (!snap.exists()) {
-                        this.pushState(storeId, window.getSerializableState());
-                        return;
-                    }
-                    const remoteData = snap.data();
-                    if (remoteData && remoteData.payload) {
-                        this.isApplyingRemote = true;
-                        window.applyRemoteCloudState(remoteData.payload, remoteData.lastEvent);
-                        this.isApplyingRemote = false;
-                    }
-                }, (error) => {
-                    console.error('Lỗi đồng bộ đám mây:', error);
-                    updateCloudIndicator('LOCAL');
-                });
-            },
-            async pushState(storeId, stateObj, eventNotice = '') {
-                if (!this.db || !this.user || !storeId || this.isApplyingRemote) return;
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smartmart-pos';
-                    const storeRef = doc(this.db, 'artifacts', appId, 'public', 'data', 'stores', storeId);
-                    await setDoc(storeRef, {
-                        payload: JSON.stringify(stateObj),
-                        updatedAt: Date.now(),
-                        lastEvent: eventNotice
-                    }, { merge: true });
-                } catch (err) {
-                    console.error('Không thể đẩy dữ liệu lên đám mây:', err);
-                }
-            }
-        };
-    </script>
-    <script>
-        // --- 1. DỮ LIỆU MẪU SIÊU THỊ VIỆT NAM THỰC TẾ (NÂNG CẤP CLOUD SYNC & PHÂN QUYỀN) ---
-        const STORAGE_KEY = 'SMARTMART_POS_DATA_V2';
-        const DEVICE_CONFIG_KEY = 'SMARTMART_DEVICE_ROLE_V1';
-
-        let deviceSession = {
-            storeId: 'SMARTMART-8899',
-            role: null, // 'CASHIER' | 'OWNER'
-            ownerPin: '1234'
-        };
-// ... existing code ...
-        // --- 4. KHỞI TẠO & LƯU TRỮ LOCALSTORAGE + ĐỒNG BỘ ĐÁM MÂY ---
-        async function initApp() {
-            const savedDevice = localStorage.getItem(DEVICE_CONFIG_KEY);
-            if (savedDevice) {
-                try {
-                    deviceSession = { ...deviceSession, ...JSON.parse(savedDevice) };
-                } catch (e) {}
-            }
-
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    appState = JSON.parse(saved);
-                    if (!appState.promotions) appState.promotions = JSON.parse(JSON.stringify(DEFAULT_PROMOTIONS));
-                    if (!appState.rewards) appState.rewards = JSON.parse(JSON.stringify(DEFAULT_REWARDS));
-                } catch (e) {
-                    seedInitialData();
-                }
-            } else {
-                seedInitialData();
-            }
-
-            document.getElementById('header-cashier').textContent = appState.cashier;
-            document.getElementById('setting-cashier').value = appState.cashier;
-            document.getElementById('gate-store-id').value = deviceSession.storeId;
-
-            renderPosCategories();
-            renderPosProducts();
-            updateCartUI();
-            updateHoldBadge();
-            updateLowStockBadge();
-            updateBirthdayBadge();
-
-            if (window.CloudSync) {
-                await window.CloudSync.init();
-            }
-
-            if (deviceSession.role) {
-                applyRolePermissions();
-                if (window.CloudSync) window.CloudSync.subscribeStore(deviceSession.storeId);
-            } else {
-                document.getElementById('modal-role-gate').classList.remove('hidden');
-            }
+            x: { ticks: { font: { size: 10 } } }
+          }
         }
+      });
+    }
 
-        function saveDeviceConfig() {
-            localStorage.setItem(DEVICE_CONFIG_KEY, JSON.stringify(deviceSession));
-        }
+    // ==========================================
+    // 4. GLOBAL NAVIGATION & INIT
+    // ==========================================
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.activeTab = btn.dataset.tab;
+        render();
+      });
+    });
 
-        function generateNewStoreId() {
-            const rand = Math.floor(1000 + Math.random() * 9000);
-            const code = `SMARTMART-${rand}`;
-            document.getElementById('gate-store-id').value = code;
-            showToast(`Đã tạo Mã Cửa Hàng mới: ${code}`, 'info');
-        }
+    document.getElementById('btn-role-switch').addEventListener('click', () => {
+      state.activeTab = state.activeTab === 'owner' ? 'pos' : 'owner';
+      render();
+    });
 
-        function copyStoreId() {
-            const code = (document.getElementById('gate-store-id')?.value || deviceSession.storeId || '').trim().toUpperCase();
-            if (!code) return;
-            const temp = document.createElement('textarea');
-            temp.value = code;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-            showToast(`Đã sao chép Mã Cửa Hàng "${code}"!`, 'success');
-        }
-
-        function enterAppAsCashier() {
-            const storeId = document.getElementById('gate-store-id').value.trim().toUpperCase();
-            if (!storeId) {
-                showToast('Vui lòng nhập hoặc tạo Mã Cửa Hàng!', 'warning');
-                return;
-            }
-            deviceSession.storeId = storeId;
-            deviceSession.role = 'CASHIER';
-            saveDeviceConfig();
-
-            document.getElementById('modal-role-gate').classList.add('hidden');
-            applyRolePermissions();
-            if (window.CloudSync) window.CloudSync.subscribeStore(storeId);
-            showToast(`Đã kích hoạt Máy Quầy Thu Ngân (${storeId})`, 'success');
-        }
-
-        function enterAppAsOwner() {
-            const storeId = document.getElementById('gate-store-id').value.trim().toUpperCase();
-            const pin = document.getElementById('gate-owner-pin').value.trim();
-            if (!storeId) {
-                showToast('Vui lòng nhập Mã Cửa Hàng cần giám sát!', 'warning');
-                return;
-            }
-            const validPin = appState.ownerPin || deviceSession.ownerPin || '1234';
-            if (pin !== validPin) {
-                showToast('Mã PIN Chủ Cửa Hàng không chính xác!', 'error');
-                return;
-            }
-            deviceSession.storeId = storeId;
-            deviceSession.role = 'OWNER';
-            saveDeviceConfig();
-
-            document.getElementById('gate-owner-pin').value = '';
-            document.getElementById('modal-role-gate').classList.add('hidden');
-            applyRolePermissions();
-            if (window.CloudSync) window.CloudSync.subscribeStore(storeId);
-            switchTab('reports');
-            showToast(`Chào mừng Chủ Cửa Hàng! Đang giám sát ${storeId}`, 'success');
-        }
-
-        function openRoleSwitchModal() {
-            closeModal('modal-settings');
-            document.getElementById('gate-store-id').value = deviceSession.storeId;
-            document.getElementById('gate-owner-pin').value = '';
-            document.getElementById('modal-role-gate').classList.remove('hidden');
-        }
-
-        function updateOwnerPin() {
-            const newPin = document.getElementById('setting-new-pin').value.trim();
-            if (!/^\d{4}$/.test(newPin)) {
-                showToast('Mã PIN phải gồm đúng 4 chữ số!', 'warning');
-                return;
-            }
-            deviceSession.ownerPin = newPin;
-            appState.ownerPin = newPin;
-            saveDeviceConfig();
-            saveState('Cập nhật mã PIN bảo mật Chủ Shop');
-            document.getElementById('setting-new-pin').value = '';
-            showToast('Đã cập nhật mã PIN Chủ Cửa Hàng thành công!', 'success');
-        }
-
-        function applyRolePermissions() {
-            const isOwner = deviceSession.role === 'OWNER';
-            document.getElementById('header-role-badge').textContent = isOwner ? `Chủ Shop • ${deviceSession.storeId}` : `Quầy Thu Ngân • ${deviceSession.storeId}`;
-            document.getElementById('btn-role-label').textContent = isOwner ? 'Khóa quầy' : 'Chủ Shop';
-            document.getElementById('btn-header-settings').classList.toggle('hidden', !isOwner);
-            document.getElementById('settings-store-id-display').textContent = deviceSession.storeId;
-
-            // Ẩn tab Kho hàng & Báo cáo doanh thu khi ở chế độ Máy Quầy Thu Ngân
-            document.querySelectorAll('.owner-only-nav').forEach(el => {
-                el.classList.toggle('hidden', !isOwner);
-            });
-
-            if (!isOwner) {
-                switchTab('pos');
-            }
-        }
-
-        function updateCloudIndicator(status) {
-            const dot = document.getElementById('cloud-status-dot');
-            const text = document.getElementById('cloud-status-text');
-            if (!dot || !text) return;
-            if (status === 'LIVE') {
-                dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-                text.textContent = 'Đám mây Live';
-            } else if (status === 'SYNCING') {
-                dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping';
-                text.textContent = 'Đang đồng bộ...';
-            } else {
-                dot.className = 'w-1.5 h-1.5 rounded-full bg-sky-300';
-                text.textContent = 'Lưu tại máy';
-            }
-        }
-
-        window.getSerializableState = function () {
-            return appState;
-        };
-
-        window.applyRemoteCloudState = function (payloadStr, lastEvent) {
-            try {
-                const incoming = JSON.parse(payloadStr);
-                if (!incoming || !incoming.products) return;
-                const prevInvCount = appState.invoices ? appState.invoices.length : 0;
-                appState = incoming;
-                if (appState.ownerPin) {
-                    deviceSession.ownerPin = appState.ownerPin;
-                    saveDeviceConfig();
-                }
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-
-                renderPosProducts();
-                renderCrmCustomers();
-                renderPromotions();
-                renderRewardsCatalog();
-                renderInvoices();
-                renderProductManagement();
-                renderInventory();
-                if (deviceSession.role === 'OWNER') {
-                    renderReports();
-                }
-                updateLowStockBadge();
-                updateBirthdayBadge();
-
-                if (deviceSession.role === 'OWNER' && appState.invoices.length > prevInvCount) {
-                    const latest = appState.invoices[0];
-                    playBeepSound(1800, 0.12);
-                    showToast(`Đơn mới từ quầy: ${latest.id} (+${formatVND(latest.total)})`, 'success');
-                }
-            } catch (e) {
-                console.error('Lỗi giải mã dữ liệu đồng bộ:', e);
-            }
-        };
-// ... existing code ...
-        function saveState(eventNotice = '') {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-            updateLowStockBadge();
-            updateBirthdayBadge();
-            if (window.CloudSync && deviceSession.storeId) {
-                window.CloudSync.pushState(deviceSession.storeId, appState, eventNotice);
-            }
-        }
-// ... existing code ...
-        // --- 5. ĐIỀU HƯỚNG 6 TAB CHÍNH (CÓ KIỂM SOÁT PHÂN QUYỀN) ---
-        function switchTab(tabName) {
-            if (deviceSession.role === 'CASHIER' && (tabName === 'inventory' || tabName === 'reports')) {
-                showToast('Chức năng này chỉ dành cho Chủ Cửa Hàng!', 'warning');
-                return;
-            }
-            const tabs = ['pos', 'crm', 'invoices', 'products', 'inventory', 'reports'];
-            tabs.forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-            });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-// ... existing code ...
+    window.addEventListener('DOMContentLoaded', () => { render(true); startCloudPolling(); if (cloudConfig.enabled) pullFromCloud(true); });
+  </script>
+</body>
+</html>
