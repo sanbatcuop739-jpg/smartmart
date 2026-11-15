@@ -465,6 +465,8 @@
 
     function getSharedPayload() {
       return {
+        categories: state.categories,
+        promos: state.promos,
         products: state.products,
         customers: state.customers,
         gifts: state.gifts,
@@ -480,6 +482,8 @@
 
     function applySharedPayload(data) {
       if (!data || typeof data !== 'object') return false;
+      if (Array.isArray(data.categories)) state.categories = data.categories;
+      if (Array.isArray(data.promos)) state.promos = data.promos;
       if (Array.isArray(data.products)) state.products = data.products;
       if (Array.isArray(data.customers)) state.customers = data.customers;
       if (Array.isArray(data.gifts)) state.gifts = data.gifts;
@@ -647,6 +651,8 @@
     }
 
     function resetDemoData() {
+      state.categories = JSON.parse(JSON.stringify(INITIAL_CATEGORIES));
+      state.promos = JSON.parse(JSON.stringify(INITIAL_PROMOS));
       state.products = JSON.parse(JSON.stringify(INITIAL_PRODUCTS));
       state.customers = JSON.parse(JSON.stringify(INITIAL_CUSTOMERS));
       state.gifts = JSON.parse(JSON.stringify(INITIAL_GIFTS));
@@ -676,6 +682,14 @@
       { id: 'P12', barcode: '8935049001122', name: 'Trà xanh Không Độ 455ml (Lốc 6)', category: 'Đồ uống', price: 52000, cost: 41000, stock: 22, unit: 'Lốc', emoji: '🍵' },
       { id: 'P13', barcode: '8936011223344', name: 'Thịt ba rọi heo VietGAP Khay 500g', category: 'Tươi sống', price: 82000, cost: 65000, stock: 9, unit: 'Khay', emoji: '🥩' },
       { id: 'P14', barcode: '8934680005511', name: 'Snack Khoai tây Lay’s Vị Tự nhiên 95g', category: 'Bánh kẹo', price: 24000, cost: 18000, stock: 40, unit: 'Gói', emoji: '🥔' }
+    ];
+
+    const INITIAL_CATEGORIES = ['Đồ uống', 'Thực phẩm', 'Hóa mỹ phẩm', 'Bánh kẹo', 'Tươi sống'];
+
+    const INITIAL_PROMOS = [
+      { id: 'PR1', code: 'GIAM10', name: 'Giảm 10% toàn đơn', type: 'percent', value: 10, minOrder: 0, active: true },
+      { id: 'PR2', code: 'SIEUTHI20K', name: 'Giảm 20.000đ đơn từ 100k', type: 'fixed', value: 20000, minOrder: 100000, active: true },
+      { id: 'PR3', code: 'VIP50K', name: 'Ưu đãi VIP giảm 50.000đ', type: 'fixed', value: 50000, minOrder: 300000, active: true }
     ];
 
     const INITIAL_CUSTOMERS = [
@@ -730,6 +744,8 @@
       orderSearch: '',
       ownerBranch: 'Tất cả chi nhánh',
       ownerTimeframe: 'Hôm nay',
+      categories: INITIAL_CATEGORIES,
+      promos: INITIAL_PROMOS,
       products: INITIAL_PRODUCTS,
       customers: INITIAL_CUSTOMERS,
       gifts: INITIAL_GIFTS,
@@ -751,6 +767,9 @@
       careLogs: INITIAL_CARE_LOGS,
       auditLogs: INITIAL_AUDIT_LOGS
     };
+
+    if (!Array.isArray(state.categories)) state.categories = JSON.parse(JSON.stringify(INITIAL_CATEGORIES));
+    if (!Array.isArray(state.promos)) state.promos = JSON.parse(JSON.stringify(INITIAL_PROMOS));
 
     function saveState(skipCloud = false) {
       try {
@@ -833,9 +852,12 @@
       const subtotal = state.cart.reduce((s, item) => s + item.price * item.qty, 0);
       let promoDiscount = 0;
       const code = (state.promoCode || '').trim().toUpperCase();
-      if (code === 'GIAM10') promoDiscount = Math.round(subtotal * 0.1);
-      else if (code === 'SIEUTHI20K' && subtotal >= 100000) promoDiscount = 20000;
-      else if (code === 'VIP50K' && subtotal >= 300000) promoDiscount = 50000;
+      const matchedPromo = (state.promos || []).find(pr => pr.active && pr.code.toUpperCase() === code);
+      if (matchedPromo && subtotal >= (matchedPromo.minOrder || 0)) {
+        promoDiscount = matchedPromo.type === 'percent'
+          ? Math.round(subtotal * (matchedPromo.value / 100))
+          : Math.min(subtotal, matchedPromo.value);
+      }
 
       const customer = state.customers.find(c => c.id === state.selectedCustomerId);
       let pointsUsed = 0;
@@ -899,7 +921,7 @@
 
     // ---------- TAB 1: POS ----------
     function renderPOS(container) {
-      const categories = ['Tất cả', 'Đồ uống', 'Thực phẩm', 'Hóa mỹ phẩm', 'Bánh kẹo', 'Tươi sống'];
+      const categories = ['Tất cả', ...(state.categories || [])];
       const q = state.posSearch.toLowerCase().trim();
       const filtered = state.products.filter(p => {
         const matchCat = state.posCategory === 'Tất cả' || p.category === state.posCategory;
@@ -1183,8 +1205,13 @@
             <!-- Promo & Points -->
             <div class="bg-slate-50 p-3 rounded-xl space-y-2 border border-slate-200">
               <div class="flex gap-1.5">
-                <input id="promo-input" type="text" value="${state.promoCode}" placeholder="Mã giảm giá (GIAM10, SIEUTHI20K, VIP50K)" class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs uppercase" />
+                <input id="promo-input" type="text" value="${state.promoCode}" placeholder="Nhập hoặc chạm mã khuyến mãi..." class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs uppercase" />
                 <button onclick="applyPromo('${paymentMethod}')" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold">Áp dụng</button>
+              </div>
+              <div class="flex gap-1.5 flex-wrap">
+                ${(state.promos || []).filter(pr => pr.active).map(pr => `
+                  <button onclick="state.promoCode='${pr.code}'; openCartModal('${paymentMethod}');" class="px-2 py-1 rounded-lg text-[10px] font-bold border ${state.promoCode === pr.code ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-200'}">${pr.code} (${pr.type === 'percent' ? pr.value + '%' : fmt(pr.value)})</button>
+                `).join('')}
               </div>
               ${customer ? `
                 <label class="flex items-center justify-between text-xs pt-1 cursor-pointer">
@@ -1729,6 +1756,9 @@
           </div>
           <div class="space-y-2">
             <input id="np-name" type="text" placeholder="Tên sản phẩm" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <select id="np-cat" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold">
+              ${(state.categories || []).map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
             <input id="np-barcode" type="text" placeholder="Mã vạch EAN-13 (tự tạo nếu để trống)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
             <div class="grid grid-cols-2 gap-2">
               <input id="np-price" type="number" placeholder="Giá bán (đ)" class="px-3 py-2 border border-slate-200 rounded-xl text-xs" />
@@ -1742,11 +1772,12 @@
 
     function confirmAddProduct() {
       const name = document.getElementById('np-name').value.trim();
+      const cat = document.getElementById('np-cat')?.value || (state.categories[0] || 'Khác');
       const price = Number(document.getElementById('np-price').value || 0);
       const stock = Number(document.getElementById('np-stock').value || 0);
       const barcode = document.getElementById('np-barcode').value.trim() || ('893' + Math.floor(1000000000 + Math.random() * 8999999999));
       if (!name || price <= 0) { showToast('Nhập tên và giá bán hợp lệ', 'warn'); return; }
-      state.products.unshift({ id: 'P' + Date.now(), barcode, name, category: 'Thực phẩm', price, cost: Math.round(price * 0.8), stock, unit: 'Cái', emoji: '📦' });
+      state.products.unshift({ id: 'P' + Date.now(), barcode, name, category: cat, price, cost: Math.round(price * 0.8), stock, unit: 'Cái', emoji: '📦' });
       closeModal();
       render();
       showToast(`Đã thêm ${name}`);
@@ -1890,6 +1921,28 @@
             </div>
           </div>
 
+          <!-- Owner Quick Management: Categories, Price List, Promos -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <h3 class="text-xs font-bold text-slate-800">Thiết lập Cửa hàng (Chủ shop)</h3>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="openCategoryManagerModal()" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-center active:scale-95 transition">
+                <div class="text-base">🗂️</div>
+                <div class="text-[11px] font-bold mt-0.5">Danh mục</div>
+                <div class="text-[10px] opacity-80">${state.categories.length} nhóm</div>
+              </button>
+              <button onclick="openPriceManagerModal()" class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-center active:scale-95 transition">
+                <div class="text-base">🏷️</div>
+                <div class="text-[11px] font-bold mt-0.5">Bảng giá</div>
+                <div class="text-[10px] opacity-80">${state.products.length} SP</div>
+              </button>
+              <button onclick="openPromoManagerModal()" class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-center active:scale-95 transition">
+                <div class="text-base">🎁</div>
+                <div class="text-[11px] font-bold mt-0.5">Khuyến mãi</div>
+                <div class="text-[10px] opacity-80">${state.promos.filter(p=>p.active).length} đang bật</div>
+              </button>
+            </div>
+          </div>
+
           <!-- Revenue Chart -->
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-2">
@@ -1987,6 +2040,190 @@
           }
         }
       });
+    }
+
+    // ==========================================
+    // 3B. OWNER MANAGEMENT: CATEGORIES, PRICES, PROMOS
+    // ==========================================
+    function openCategoryManagerModal() {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Quản lý Danh mục hàng</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="flex gap-2">
+            <input id="new-cat-input" type="text" placeholder="Tên danh mục mới (VD: Gia vị)" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            <button onclick="addOwnerCategory()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shrink-0">+ Thêm</button>
+          </div>
+          <div class="space-y-1.5 max-h-72 overflow-y-auto">
+            ${state.categories.map((cat, idx) => {
+              const count = state.products.filter(p => p.category === cat).length;
+              return `
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <div>
+                    <div class="text-xs font-bold text-slate-800">${cat}</div>
+                    <div class="text-[10px] text-slate-500">${count} sản phẩm</div>
+                  </div>
+                  <button onclick="removeOwnerCategory(${idx})" class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg text-[11px] font-semibold">Xóa</button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function addOwnerCategory() {
+      const val = (document.getElementById('new-cat-input')?.value || '').trim();
+      if (!val) { showToast('Vui lòng nhập tên danh mục', 'warn'); return; }
+      if (state.categories.includes(val)) { showToast('Danh mục này đã tồn tại', 'warn'); return; }
+      state.categories.push(val);
+      render();
+      openCategoryManagerModal();
+      showToast(`Đã thêm danh mục "${val}"`);
+    }
+
+    function removeOwnerCategory(idx) {
+      if (state.categories.length <= 1) { showToast('Cần giữ lại ít nhất 1 danh mục', 'warn'); return; }
+      const removed = state.categories[idx];
+      state.categories.splice(idx, 1);
+      const fallback = state.categories[0];
+      state.products.forEach(p => { if (p.category === removed) p.category = fallback; });
+      if (state.posCategory === removed) state.posCategory = 'Tất cả';
+      render();
+      openCategoryManagerModal();
+      showToast(`Đã xóa danh mục "${removed}"`);
+    }
+
+    function openPriceManagerModal() {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Đặt lại Bảng giá bán & Giá vốn</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="flex items-center justify-between bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-[11px] text-amber-900">
+            <span>Sửa giá trực tiếp sẽ đồng bộ ngay xuống máy Thu ngân.</span>
+            <button onclick="resetAllPrices()" class="px-2 py-1 bg-white border border-amber-300 rounded-lg font-bold text-amber-800 shrink-0 ml-2">Khôi phục gốc</button>
+          </div>
+          <div class="space-y-2 max-h-80 overflow-y-auto">
+            ${state.products.map((p, idx) => `
+              <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-800 truncate">${p.emoji} ${p.name}</span>
+                  <span class="text-[10px] text-slate-500 shrink-0">${p.category}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">Giá bán (đ)</label>
+                    <input id="pm-price-${idx}" type="number" value="${p.price}" class="w-full px-2 py-1 border border-slate-300 rounded-lg text-xs font-bold text-emerald-700" />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">Giá vốn (đ)</label>
+                    <input id="pm-cost-${idx}" type="number" value="${p.cost}" class="w-full px-2 py-1 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700" />
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="saveAllPrices()" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Lưu toàn bộ Bảng giá mới</button>
+        </div>
+      `);
+    }
+
+    function saveAllPrices() {
+      state.products.forEach((p, idx) => {
+        const np = Number(document.getElementById(`pm-price-${idx}`)?.value || p.price);
+        const nc = Number(document.getElementById(`pm-cost-${idx}`)?.value || p.cost);
+        if (np > 0) p.price = np;
+        if (nc >= 0) p.cost = nc;
+      });
+      closeModal();
+      render();
+      showToast('Đã cập nhật bảng giá mới toàn hệ thống!');
+    }
+
+    function resetAllPrices() {
+      state.products.forEach(p => {
+        const orig = INITIAL_PRODUCTS.find(x => x.id === p.id);
+        if (orig) { p.price = orig.price; p.cost = orig.cost; }
+      });
+      render();
+      openPriceManagerModal();
+      showToast('Đã khôi phục bảng giá gốc!');
+    }
+
+    function openPromoManagerModal() {
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[88vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">Chương trình Khuyến mãi</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] font-bold text-slate-700">Tạo mã khuyến mãi mới</div>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="pr-code" type="text" placeholder="Mã (VD: TET2027)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs uppercase font-bold" />
+              <select id="pr-type" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs">
+                <option value="percent">Giảm theo %</option>
+                <option value="fixed">Giảm tiền (đ)</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="pr-val" type="number" placeholder="Mức giảm (% hoặc đ)" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+              <input id="pr-min" type="number" placeholder="Đơn tối thiểu (đ)" value="0" class="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+            </div>
+            <input id="pr-name" type="text" placeholder="Tên chương trình (VD: Khai trương giảm 15%)" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs" />
+            <button onclick="addOwnerPromo()" class="w-full py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">+ Thêm chương trình KM</button>
+          </div>
+
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${state.promos.map((pr, idx) => `
+              <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-extrabold text-emerald-700">${pr.code}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${pr.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${pr.active ? 'Đang bật' : 'Đã tắt'}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-600 truncate">${pr.name} • Giảm ${pr.type === 'percent' ? pr.value + '%' : fmt(pr.value)}</div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button onclick="toggleOwnerPromo(${idx})" class="px-2 py-1 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold">${pr.active ? 'Tắt' : 'Bật'}</button>
+                  <button onclick="deleteOwnerPromo(${idx})" class="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg text-[11px] font-semibold">Xóa</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function addOwnerPromo() {
+      const code = (document.getElementById('pr-code')?.value || '').trim().toUpperCase();
+      const type = document.getElementById('pr-type')?.value || 'percent';
+      const value = Number(document.getElementById('pr-val')?.value || 0);
+      const minOrder = Number(document.getElementById('pr-min')?.value || 0);
+      const name = (document.getElementById('pr-name')?.value || '').trim() || `Ưu đãi ${code}`;
+      if (!code || value <= 0) { showToast('Nhập mã và mức giảm hợp lệ', 'warn'); return; }
+      state.promos.unshift({ id: 'PR' + Date.now(), code, name, type, value, minOrder, active: true });
+      render();
+      openPromoManagerModal();
+      showToast(`Đã tạo mã khuyến mãi ${code}!`);
+    }
+
+    function toggleOwnerPromo(idx) {
+      if (!state.promos[idx]) return;
+      state.promos[idx].active = !state.promos[idx].active;
+      render();
+      openPromoManagerModal();
+    }
+
+    function deleteOwnerPromo(idx) {
+      state.promos.splice(idx, 1);
+      render();
+      openPromoManagerModal();
+      showToast('Đã xóa chương trình khuyến mãi');
     }
 
     // ==========================================
