@@ -493,6 +493,8 @@
         shift: state.shift,
         redemptions: state.redemptions,
         careLogs: state.careLogs,
+        cashDrawerLogs: state.cashDrawerLogs,
+        drawerCounts: state.drawerCounts,
         stockLogs: state.stockLogs,
         auditLogs: state.auditLogs,
         updatedAt: Date.now()
@@ -516,6 +518,8 @@
       if (data.shift && typeof data.shift === 'object') state.shift = data.shift;
       if (Array.isArray(data.redemptions)) state.redemptions = data.redemptions;
       if (Array.isArray(data.careLogs)) state.careLogs = data.careLogs;
+      if (Array.isArray(data.cashDrawerLogs)) state.cashDrawerLogs = data.cashDrawerLogs;
+      if (data.drawerCounts && typeof data.drawerCounts === 'object') state.drawerCounts = data.drawerCounts;
       if (Array.isArray(data.stockLogs)) state.stockLogs = data.stockLogs;
       if (Array.isArray(data.auditLogs)) state.auditLogs = data.auditLogs;
       return true;
@@ -686,6 +690,8 @@
       state.gifts = JSON.parse(JSON.stringify(INITIAL_GIFTS));
       state.orders = JSON.parse(JSON.stringify(INITIAL_ORDERS));
       state.careLogs = JSON.parse(JSON.stringify(INITIAL_CARE_LOGS));
+      state.cashDrawerLogs = [];
+      state.drawerCounts = {};
       state.stockLogs = JSON.parse(JSON.stringify(INITIAL_STOCK_LOGS));
       state.auditLogs = JSON.parse(JSON.stringify(INITIAL_AUDIT_LOGS));
       state.heldBills = [];
@@ -803,6 +809,8 @@
       ownerChartMode: 'daily',
       ownerStartDate: '2026-11-01',
       ownerEndDate: '2026-11-30',
+      cashDrawerLogs: [],
+      drawerCounts: {},
       stockLogs: INITIAL_STOCK_LOGS,
       storeInfo: { name: 'Mini Mart 2', address: 'KP. Lộc An, P. Trảng Bàng, Tây Ninh', phone: '0276.3888.999', branch: 'CN1 - Trảng Bàng', openingDate: '2026-11-01', footerNote: 'Cảm ơn Quý khách! Hẹn gặp lại!' },
       branches: INITIAL_BRANCHES,
@@ -849,6 +857,8 @@
     }
     if (!state.shift.mode) state.shift.mode = 'auto';
     if (!state.shift.endTime) state.shift.endTime = '22:00';
+    if (!Array.isArray(state.cashDrawerLogs)) state.cashDrawerLogs = [];
+    if (!state.drawerCounts || typeof state.drawerCounts !== 'object') state.drawerCounts = {};
     if (!Array.isArray(state.stockLogs)) state.stockLogs = JSON.parse(JSON.stringify(INITIAL_STOCK_LOGS));
     if (!state.ownerChartMode) state.ownerChartMode = 'daily';
     if (!state.ownerStartDate) state.ownerStartDate = (state.storeInfo && state.storeInfo.openingDate) || '2026-11-01';
@@ -881,6 +891,172 @@
     // 2. HELPERS & SOUND / TOAST / MODAL
     // ==========================================
     const fmt = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
+
+    const VND_DENOMS = [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000];
+
+    function playDrawerLatchSound() {
+      playBeep(900, 0.05);
+      setTimeout(() => playBeep(1300, 0.08), 65);
+    }
+
+    function getCashDrawerSummary() {
+      const cashSales = state.orders
+        .filter(o => o.status === 'Hoàn thành' && o.method === 'Tiền mặt')
+        .reduce((s, o) => s + o.total, 0);
+      const cashIn = (state.cashDrawerLogs || [])
+        .filter(l => l.type === 'in')
+        .reduce((s, l) => s + (l.amount || 0), 0);
+      const cashOut = (state.cashDrawerLogs || [])
+        .filter(l => l.type === 'out')
+        .reduce((s, l) => s + (l.amount || 0), 0);
+      const opening = Number((state.shift && state.shift.openingCash) || 0);
+      const expected = opening + cashSales + cashIn - cashOut;
+      const counted = VND_DENOMS.reduce((s, d) => s + d * Number((state.drawerCounts && state.drawerCounts[d]) || 0), 0);
+      return { opening, cashSales, cashIn, cashOut, expected, counted, diff: counted - expected };
+    }
+
+    function manualOpenDrawer() {
+      playDrawerLatchSound();
+      const time = new Date().toTimeString().slice(0, 5);
+      state.auditLogs.unshift({
+        id: 'AL' + Date.now(),
+        time,
+        branch: state.shift.branch,
+        staff: state.shift.cashier,
+        action: 'Mở két tiền thủ công',
+        detail: 'Thu ngân bấm mở ngăn kéo két tiền tại quầy',
+        level: 'warn'
+      });
+      render();
+      showToast('🗄️ Đã bật chốt mở két tiền (đã ghi nhật ký quầy)!');
+    }
+
+    function openCashDrawerModal() {
+      const sum = getCashDrawerSummary();
+      openModal(`
+        <div class="p-4 space-y-3 overflow-y-auto max-h-[90vh]">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-slate-900">🗄️ Két tiền Siêu thị (Quản lý & Kiểm đếm)</h3>
+            <button onclick="closeModal()" class="text-slate-400 text-lg font-bold px-2">✕</button>
+          </div>
+
+          <div class="bg-slate-900 text-white p-3 rounded-2xl space-y-1.5 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">Tiền đầu ca:</span><b>${fmt(sum.opening)}</b></div>
+            <div class="flex justify-between"><span class="text-slate-400">+ Bán tiền mặt:</span><b class="text-emerald-400">+${fmt(sum.cashSales)}</b></div>
+            <div class="flex justify-between"><span class="text-slate-400">+ Nạp thêm vào két:</span><b class="text-blue-400">+${fmt(sum.cashIn)}</b></div>
+            <div class="flex justify-between"><span class="text-slate-400">- Rút / Chi từ két:</span><b class="text-rose-400">-${fmt(sum.cashOut)}</b></div>
+            <div class="flex justify-between text-sm font-extrabold pt-1.5 border-t border-slate-700">
+              <span>Tiền dự kiến trong két:</span>
+              <span class="text-amber-400">${fmt(sum.expected)}</span>
+            </div>
+          </div>
+
+          <button onclick="manualOpenDrawer()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold">🔓 Bật mở két tiền ngay (Ghi nhật ký)</button>
+
+          <!-- Thu / Chi két tiền -->
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] font-bold text-slate-700">Phiếu Nạp / Rút tiền két</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <select id="cd-tx-type" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
+                <option value="in">+ Nạp tiền lẻ / Thu</option>
+                <option value="out">- Rút nộp chủ / Chi</option>
+              </select>
+              <input id="cd-tx-amt" type="number" placeholder="Số tiền (đ)" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold" />
+            </div>
+            <div class="flex gap-1.5">
+              <input id="cd-tx-note" type="text" placeholder="Lý do (VD: Bổ sung tiền lẻ, Nộp két tổng...)" class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs" />
+              <button onclick="submitCashDrawerTx()" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold shrink-0">Lưu</button>
+            </div>
+          </div>
+
+          <!-- Kiểm đếm mệnh giá -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-800">💵 Kiểm đếm mệnh giá trong két</span>
+              <span class="text-xs font-extrabold text-emerald-700" id="cd-counted-total">${fmt(sum.counted)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              ${VND_DENOMS.map(d => `
+                <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                  <div class="text-[10px] font-bold text-slate-600">${(d/1000)}k</div>
+                  <input type="number" min="0" value="${(state.drawerCounts && state.drawerCounts[d]) || 0}" oninput="updateDenomCount(${d}, this.value)" class="w-full px-1.5 py-0.5 bg-white border border-slate-200 rounded text-xs font-bold text-right mt-0.5" />
+                </div>
+              `).join('')}
+            </div>
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+              <span class="text-slate-600">Chênh lệch thực tế:</span>
+              <span id="cd-diff-total" class="font-extrabold ${sum.diff === 0 ? 'text-emerald-600' : 'text-rose-600'}">${sum.diff >= 0 ? '+' : ''}${fmt(sum.diff)}</span>
+            </div>
+            <button onclick="saveDrawerAudit()" class="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Xác nhận Kiểm két & Lưu biên bản</button>
+          </div>
+
+          ${(state.cashDrawerLogs || []).length > 0 ? `
+            <div class="space-y-1">
+              <div class="text-[11px] font-bold text-slate-700">Lịch sử Nạp / Rút két</div>
+              ${state.cashDrawerLogs.slice(0, 5).map(l => `
+                <div class="flex justify-between text-[11px] bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                  <span>${l.note || (l.type === 'in' ? 'Nạp tiền' : 'Rút tiền')} (${l.time})</span>
+                  <b class="${l.type === 'in' ? 'text-emerald-700' : 'text-rose-600'}">${l.type === 'in' ? '+' : '-'}${fmt(l.amount)}</b>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `);
+    }
+
+    function submitCashDrawerTx() {
+      const type = document.getElementById('cd-tx-type')?.value || 'in';
+      const amount = Number(document.getElementById('cd-tx-amt')?.value || 0);
+      const note = (document.getElementById('cd-tx-note')?.value || '').trim() || (type === 'in' ? 'Nạp tiền lẻ vào két' : 'Rút tiền khỏi két');
+      if (amount <= 0) { showToast('Nhập số tiền hợp lệ', 'warn'); return; }
+      const time = new Date().toTimeString().slice(0, 5);
+      state.cashDrawerLogs.unshift({ id: 'CD' + Date.now(), time, type, amount, note, staff: state.shift.cashier });
+      state.auditLogs.unshift({
+        id: 'AL' + Date.now(),
+        time,
+        branch: state.shift.branch,
+        staff: state.shift.cashier,
+        action: type === 'in' ? 'Nạp tiền vào két' : 'Rút tiền từ két',
+        detail: `${type === 'in' ? '+' : '-'}${fmt(amount)} (${note})`,
+        level: type === 'out' ? 'warn' : 'info'
+      });
+      playDrawerLatchSound();
+      render();
+      openCashDrawerModal();
+      showToast(`Đã lưu phiếu ${type === 'in' ? 'nạp' : 'rút'} ${fmt(amount)}!`);
+    }
+
+    function updateDenomCount(denom, qty) {
+      if (!state.drawerCounts) state.drawerCounts = {};
+      state.drawerCounts[denom] = Math.max(0, Number(qty || 0));
+      const sum = getCashDrawerSummary();
+      const ct = document.getElementById('cd-counted-total');
+      const df = document.getElementById('cd-diff-total');
+      if (ct) ct.textContent = fmt(sum.counted);
+      if (df) {
+        df.textContent = (sum.diff >= 0 ? '+' : '') + fmt(sum.diff);
+        df.className = 'font-extrabold ' + (sum.diff === 0 ? 'text-emerald-600' : 'text-rose-600');
+      }
+      saveState();
+    }
+
+    function saveDrawerAudit() {
+      const sum = getCashDrawerSummary();
+      const time = new Date().toTimeString().slice(0, 5);
+      state.auditLogs.unshift({
+        id: 'AL' + Date.now(),
+        time,
+        branch: state.shift.branch,
+        staff: state.shift.cashier,
+        action: 'Kiểm đếm két tiền',
+        detail: `Thực tế: ${fmt(sum.counted)} • Dự kiến: ${fmt(sum.expected)} • Lệch: ${fmt(sum.diff)}`,
+        level: sum.diff === 0 ? 'info' : 'danger'
+      });
+      render();
+      closeModal();
+      showToast(`Đã lưu biên bản kiểm két (Chênh lệch: ${fmt(sum.diff)})!`);
+    }
 
     function playSuccessBeep() {
       playBeep(1400, 0.08);
@@ -1259,6 +1435,9 @@
                 </div>
               </div>
               <span class="text-[11px] font-semibold text-emerald-600 shrink-0">${cust ? 'Đổi' : '+ Chọn'}</span>
+            </button>
+            <button onclick="openCashDrawerModal()" class="bg-slate-900 text-white rounded-xl px-2.5 py-2 text-xs font-semibold flex items-center gap-1 shadow-sm shrink-0 active:scale-95">
+              <span>🗄️ Két</span>
             </button>
             <button id="btn-held-bills" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-1.5 shadow-sm shrink-0 active:scale-95">
               <span>Đơn treo</span>
@@ -2031,7 +2210,7 @@
       state.promoCode = '';
       state.usePoints = false;
       state.customDiscount = 0;
-      playSuccessBeep();
+      if (method === 'Tiền mặt') playDrawerLatchSound(); else playSuccessBeep();
       render();
       showToast(`✓ Thanh toán thành công • ${orderId} (${fmt(total)})`);
       openReceiptModal(newOrder);
@@ -2560,7 +2739,8 @@
       const cashSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'Tiền mặt').reduce((s, o) => s + o.total, 0);
       const qrSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'VietQR').reduce((s, o) => s + o.total, 0);
       const cardSales = state.orders.filter(o => o.status === 'Hoàn thành' && o.method === 'Thẻ / Ví').reduce((s, o) => s + o.total, 0);
-      const expectedDrawer = state.shift.openingCash + cashSales;
+      const drawerSum = getCashDrawerSummary();
+      const expectedDrawer = drawerSum.expected;
 
       container.innerHTML = `
         <div class="p-3 space-y-3">
@@ -2584,9 +2764,12 @@
                 <div class="text-[10px] text-slate-400">Tiền mặt dự kiến trong két</div>
                 <div class="text-base font-extrabold text-amber-400">${fmt(expectedDrawer)}</div>
               </div>
-              <button onclick="state.shift.closed = !state.shift.closed; render(); showToast(state.shift.closed ? 'Đã chốt ca & xuất Z-Report!' : 'Đã mở lại ca');" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold">
-                ${state.shift.closed ? 'Mở lại ca' : 'Chốt ca (Z-Report)'}
-              </button>
+              <div class="flex gap-1.5">
+                <button onclick="openCashDrawerModal()" class="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 rounded-xl text-xs font-bold">🗄️ Két tiền</button>
+                <button onclick="state.shift.closed = !state.shift.closed; render(); showToast(state.shift.closed ? 'Đã chốt ca & xuất Z-Report!' : 'Đã mở lại ca');" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold">
+                  ${state.shift.closed ? 'Mở lại ca' : 'Chốt ca (Z-Report)'}
+                </button>
+              </div>
             </div>
           </div>
 
